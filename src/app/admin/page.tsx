@@ -657,7 +657,6 @@ interface VoterRow {
   user_name: string | null;
   score: number;
   reaction: string | null;
-  created_at: string;
 }
 
 function useVoters(reelId: string | null) {
@@ -670,13 +669,16 @@ function useVoters(reelId: string | null) {
         if (!cancelled) setVoters([]);
         return;
       }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("votes")
-        .select("user_id, user_name, score, reaction, created_at")
-        .eq("reel_id", reelId)
-        .order("created_at", { ascending: false });
-      if (cancelled || !data) return;
-      setVoters(data as VoterRow[]);
+        .select("user_id, user_name, score, reaction")
+        .eq("reel_id", reelId);
+      if (cancelled) return;
+      if (error) {
+        console.error("[useVoters] load failed", error);
+        return;
+      }
+      setVoters((data as VoterRow[]) ?? []);
     };
     load();
     if (!reelId) {
@@ -734,7 +736,7 @@ function VoterList({
         <div className="bg-white border border-stone-300 divide-y divide-stone-200">
           {voters.map((v, i) => (
             <div
-              key={`${v.user_id}-${v.created_at}`}
+              key={`${v.user_id}-${i}`}
               className="grid grid-cols-[3rem_1fr_5rem_5rem] items-center gap-3 px-3 py-2 text-xs"
             >
               <span className="text-stone-400">#{i + 1}</span>
