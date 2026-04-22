@@ -2,34 +2,52 @@
 
 import { useEffect, useRef } from "react";
 import { usePlaybackSubscriber } from "@/lib/channels";
-import { findReel } from "@/lib/reels";
+import { REELS, findReel } from "@/lib/reels";
 
 export default function HallPage() {
   const state = usePlaybackSubscriber();
   const reel = findReel(state.reel_id);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Load new src when the reel changes
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !reel) return;
-    if (video.src.endsWith(reel.file_path)) return;
-    video.src = reel.file_path;
-    video.load();
-  }, [reel]);
+  const currentIdx = reel ? REELS.findIndex((r) => r.reel_id === reel.reel_id) : -1;
+  const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] : null;
 
-  // Sync play/pause
+  // Single effect: swap src only when the reel actually changes, then start
+  // playback as soon as the element has enough data. Prevents the race where
+  // play() fires before load() finishes and stalls for a beat.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (state.status === "playing") {
-      video.play().catch(() => {
-        // Autoplay may require a click; admin should click once on the hall laptop.
-      });
-    } else {
-      video.pause();
+
+    if (reel) {
+      const srcMatches = video.src.endsWith(reel.file_path);
+      if (!srcMatches) {
+        video.src = reel.file_path;
+        video.load();
+      }
     }
-  }, [state.status]);
+
+    if (state.status !== "playing" || !reel) {
+      video.pause();
+      return;
+    }
+
+    const tryPlay = () => {
+      video.play().catch(() => {
+        // Autoplay may need a one-time tap on the hall laptop.
+      });
+    };
+
+    if (video.readyState >= 2) {
+      tryPlay();
+      return;
+    }
+
+    video.addEventListener("canplay", tryPlay, { once: true });
+    return () => {
+      video.removeEventListener("canplay", tryPlay);
+    };
+  }, [reel, state.status]);
 
   if (state.status === "stopped" || !reel) {
     return <HoldingSlate />;
@@ -42,7 +60,19 @@ export default function HallPage() {
         className="w-full h-full object-contain"
         playsInline
         autoPlay
+        preload="auto"
       />
+      {/* Warm the browser cache for the next reel so Next is instant. */}
+      {nextReel && (
+        <video
+          key={nextReel.reel_id}
+          src={nextReel.file_path}
+          preload="auto"
+          muted
+          playsInline
+          className="hidden"
+        />
+      )}
     </div>
   );
 }
