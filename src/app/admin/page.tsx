@@ -103,6 +103,22 @@ function Panel() {
   const votingReel = REELS[votingIdx] ?? null;
   const votingNext = REELS[votingIdx + 1] ?? null;
 
+  // Voting actions (declared first so playback actions can reuse openVoting)
+  const openVoting = (idx: number) => {
+    const reel = REELS[idx];
+    if (!reel) return;
+    if (voting.reel_id && voting.reel_id !== reel.reel_id) {
+      setPrevVotingReel(voting.reel_id);
+    }
+    setVotingIdx(idx);
+    sendVoting({
+      reel_id: reel.reel_id,
+      status: "open",
+      opened_at: Date.now(),
+      closed_at: null,
+    });
+  };
+
   // Playback actions
   const cueAndPlay = (idx: number) => {
     const reel = REELS[idx];
@@ -133,21 +149,15 @@ function Panel() {
   const onStop = () => {
     sendPlayback({ reel_id: null, status: "stopped", timestamp: Date.now() });
   };
-  const onPrev = () => cueAndPlay(Math.max(0, playbackIdx - 1));
-  const onNext = () => cueAndPlay(Math.min(REELS.length - 1, playbackIdx + 1));
-
-  // Voting actions
-  const openVoting = (idx: number) => {
-    const reel = REELS[idx];
-    if (!reel) return;
-    if (voting.reel_id) setPrevVotingReel(voting.reel_id);
-    setVotingIdx(idx);
-    sendVoting({
-      reel_id: reel.reel_id,
-      status: "open",
-      opened_at: Date.now(),
-      closed_at: null,
-    });
+  const onPrev = () => {
+    const idx = Math.max(0, playbackIdx - 1);
+    cueAndPlay(idx);
+    openVoting(idx);
+  };
+  const onNext = () => {
+    const idx = Math.min(REELS.length - 1, playbackIdx + 1);
+    cueAndPlay(idx);
+    openVoting(idx);
   };
   const closeVotingAndAdvance = () => {
     if (voting.reel_id) setPrevVotingReel(voting.reel_id);
@@ -210,6 +220,10 @@ function Panel() {
         votingReelId={votingReel?.reel_id ?? null}
         onCuePlayback={(idx) => cueAndPlay(idx)}
         onQueueVoting={(idx) => setVotingIdx(idx)}
+      />
+      <VoterList
+        reelId={voting.reel_id}
+        reelTitle={findReel(voting.reel_id)?.title ?? null}
       />
     </div>
   );
@@ -636,4 +650,102 @@ function useVoteStats(reelId: string | null) {
   }, [reelId]);
 
   return stats;
+}
+
+interface VoterRow {
+  user_name: string;
+  score: number;
+  reaction: string | null;
+  created_at: string;
+}
+
+function useVoters(reelId: string | null) {
+  const [voters, setVoters] = useState<VoterRow[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!reelId) {
+        if (!cancelled) setVoters([]);
+        return;
+      }
+      const { data } = await supabase
+        .from("votes")
+        .select("user_name, score, reaction, created_at")
+        .eq("reel_id", reelId)
+        .order("created_at", { ascending: false });
+      if (cancelled || !data) return;
+      setVoters(data as VoterRow[]);
+    };
+    load();
+    if (!reelId) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    const ch = supabase
+      .channel(`votes-list-${reelId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "votes",
+          filter: `reel_id=eq.${reelId}`,
+        },
+        load,
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [reelId]);
+
+  return voters;
+}
+
+function VoterList({
+  reelId,
+  reelTitle,
+}: {
+  reelId: string | null;
+  reelTitle: string | null;
+}) {
+  const voters = useVoters(reelId);
+  return (
+    <section className="p-5 bg-white border-t border-stone-300">
+      <header className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold tracking-wider">
+          VOTERS {reelTitle ? `· ${reelTitle}` : ""} · {voters.length} TOTAL
+        </h2>
+        <span className="text-[10px] text-stone-500 tracking-wider">
+          LIVE FROM SUPABASE
+        </span>
+      </header>
+      {!reelId ? (
+        <div className="text-sm text-stone-500">
+          Open voting on a reel to see voters here.
+        </div>
+      ) : voters.length === 0 ? (
+        <div className="text-sm text-stone-500">No votes yet.</div>
+      ) : (
+        <div className="bg-white border border-stone-300 divide-y divide-stone-200">
+          {voters.map((v, i) => (
+            <div
+              key={`${v.user_name}-${v.created_at}-${i}`}
+              className="grid grid-cols-[3rem_1fr_5rem_5rem] items-center gap-3 px-3 py-2 text-xs"
+            >
+              <span className="text-stone-400">#{i + 1}</span>
+              <span className="font-semibold text-sm">{v.user_name}</span>
+              <span className="text-stone-600">{v.reaction ?? "—"}</span>
+              <span className="font-mono tabular-nums text-right">
+                {v.score}/100
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
