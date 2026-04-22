@@ -212,7 +212,6 @@ function VotingView({
     setError("");
     const { error } = await supabase.from("votes").insert({
       user_id: voter.id,
-      user_name: voter.name,
       reel_id: reelId,
       score,
       reaction,
