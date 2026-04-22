@@ -1,0 +1,58 @@
+[
+  {
+    "reel_id": "reel-001",
+    "file_path": "/videos/0.mp4",
+    "title": "When Bhai Tries Online Shopping",
+    "creator": "@reel_antics",
+    "category": "Comedy",
+    "runtime": 102
+  },
+  {
+    "reel_id": "reel-002",
+    "file_path": "/videos/1.mp4",
+    "title": "Me vs My Electricity Bill",
+    "creator": "@sippy_sambar",
+    "category": "Comedy",
+    "runtime": 128
+  },
+  {
+    "reel_id": "reel-003",
+    "file_path": "/videos/2.mp4",
+    "title": "Auto Uncle Fights Swiggy",
+    "creator": "@rapid_roto",
+    "category": "Satire",
+    "runtime": 97
+  },
+  {
+    "reel_id": "reel-004",
+    "file_path": "/videos/3.mp4",
+    "title": "Hinglish with Mom",
+    "creator": "@amma_ki_nazar",
+    "category": "Slice of Life",
+    "runtime": 115
+  },
+  {
+    "reel_id": "reel-005",
+    "file_path": "/videos/4.mp4",
+    "title": "WFH in a Joint Family",
+    "creator": "@cubicle_chacha",
+    "category": "Comedy",
+    "runtime": 141
+  },
+  {
+    "reel_id": "reel-006",
+    "file_path": "/videos/5.mp4",
+    "title": "Mom's WhatsApp Forwards",
+    "creator": "@forward_this",
+    "category": "Satire",
+    "runtime": 88
+  },
+  {
+    "reel_id": "reel-007",
+    "file_path": "/videos/6.mp4",
+    "title": "Office Ka Naya Intern",
+    "creator": "@cc_all",
+    "category": "Comedy",
+    "runtime": 112
+  }
+]
