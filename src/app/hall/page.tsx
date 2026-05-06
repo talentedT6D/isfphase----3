@@ -1,25 +1,58 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePlaybackSubscriber } from "@/lib/channels";
+import {
+  usePlaybackSubscriber,
+  type PlaybackState,
+} from "@/lib/channels";
 import { REELS, findReel } from "@/lib/reels";
 
 type Slot = "A" | "B";
 
 export default function HallPage() {
   const state = usePlaybackSubscriber();
-  const adminReel = findReel(state.reel_id);
 
-  // Pre-show: admin hasn't broadcast yet. Autoplay the first reel muted so
-  // the screen looks live (browsers only allow muted autoplay without a gesture).
-  const isPreShow = state.reel_id === null && state.status === "stopped";
-  const isAdminStop = state.reel_id !== null && state.status === "stopped";
-  const reel = adminReel ?? REELS[0] ?? null;
-  const isPlaying = isPreShow || state.status === "playing";
+  // Once admin has broadcast anything (timestamp > 0), we leave pre-show for
+  // good. The flag is sticky so an admin reload doesn't bounce hall back to
+  // the muted pre-show clip mid-event.
+  const [sessionStarted, setSessionStarted] = useState(false);
+  useEffect(() => {
+    if (state.timestamp > 0) setSessionStarted(true);
+  }, [state.timestamp]);
+
+  if (!sessionStarted) return <PreShow />;
+  if (state.status === "stopped") return <HoldingSlate />;
+  return <LiveStage state={state} />;
+}
+
+// Muted, looping clip of the first reel so the hall isn't sitting on a dark
+// slate while the venue is still filling in.
+function PreShow() {
+  const first = REELS[0];
+  if (!first) return <HoldingSlate />;
+  return (
+    <div className="fixed inset-0 bg-black">
+      <video
+        className="absolute inset-0 w-full h-full object-contain"
+        src={first.file_path}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+      />
+    </div>
+  );
+}
+
+function LiveStage({ state }: { state: PlaybackState }) {
+  const reel = findReel(state.reel_id);
+  const isPlaying = state.status === "playing";
 
   const aRef = useRef<HTMLVideoElement>(null);
   const bRef = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState<Slot>("A");
+  // What reel each video element currently has loaded.
   const slotReel = useRef<{ A: string | null; B: string | null }>({
     A: null,
     B: null,
@@ -31,16 +64,18 @@ export default function HallPage() {
   const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] ?? null : null;
 
   // Drive the active slot to show the current reel. If the inactive slot has
-  // already preloaded the new reel, the swap is instant — just a 500ms opacity
-  // crossfade. Otherwise we load it, wait for canplay, then swap.
+  // already preloaded the new reel (the common case once a show is running),
+  // the swap is a 500ms opacity crossfade with no buffering pause.
   useEffect(() => {
-    if (isAdminStop || !reel) return;
+    if (!reel) return;
     const aVideo = aRef.current;
     const bVideo = bRef.current;
     if (!aVideo || !bVideo) return;
 
     const target = reel.reel_id;
     const activeVideo = active === "A" ? aVideo : bVideo;
+    const inactive: Slot = active === "A" ? "B" : "A";
+    const inactiveVideo = inactive === "A" ? aVideo : bVideo;
 
     if (slotReel.current[active] === target) {
       if (isPlaying) activeVideo.play().catch(() => {});
@@ -63,9 +98,6 @@ export default function HallPage() {
       return () => activeVideo.removeEventListener("canplay", start);
     }
 
-    const inactive: Slot = active === "A" ? "B" : "A";
-    const inactiveVideo = inactive === "A" ? aVideo : bVideo;
-
     if (slotReel.current[inactive] !== target) {
       inactiveVideo.src = reel.file_path;
       inactiveVideo.load();
@@ -74,8 +106,10 @@ export default function HallPage() {
 
     const swap = () => {
       if (isPlaying) inactiveVideo.play().catch(() => {});
+      // Pause the outgoing slot immediately on its current frame; the opacity
+      // transition fades out the frozen frame underneath the new playback.
+      activeVideo.pause();
       setActive(inactive);
-      window.setTimeout(() => activeVideo.pause(), 500);
     };
 
     if (inactiveVideo.readyState >= 3) {
@@ -84,10 +118,10 @@ export default function HallPage() {
     }
     inactiveVideo.addEventListener("canplay", swap, { once: true });
     return () => inactiveVideo.removeEventListener("canplay", swap);
-  }, [reel, isPlaying, isAdminStop, active]);
+  }, [reel, isPlaying, active]);
 
-  // Preload the next reel into whichever slot is currently inactive, so the
-  // next swap is a fade not a fetch.
+  // Preload the next reel into whichever slot is currently inactive so the
+  // upcoming swap is instant.
   useEffect(() => {
     if (!nextReel || !reel) return;
     const inactive: Slot = active === "A" ? "B" : "A";
@@ -100,22 +134,24 @@ export default function HallPage() {
     slotReel.current[inactive] = nextReel.reel_id;
   }, [nextReel, active, reel]);
 
-  if (isAdminStop) return <HoldingSlate />;
+  if (!reel) return <HoldingSlate />;
 
   return (
     <div className="fixed inset-0 bg-black">
       <video
         ref={aRef}
-        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${active === "A" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${
+          active === "A" ? "opacity-100 z-10" : "opacity-0 z-0"
+        }`}
         playsInline
-        muted={isPreShow}
         preload="auto"
       />
       <video
         ref={bRef}
-        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${active === "B" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${
+          active === "B" ? "opacity-100 z-10" : "opacity-0 z-0"
+        }`}
         playsInline
-        muted={isPreShow}
         preload="auto"
       />
     </div>

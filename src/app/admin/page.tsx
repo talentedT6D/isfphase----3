@@ -82,6 +82,15 @@ function Panel() {
     useVotingBroadcaster(INITIAL_VOTING);
 
   const [query, setQuery] = useState("");
+  const [prevVotingReel, setPrevVotingReel] = useState<string | null>(null);
+
+  // Track the last reel that had voting open, so we can re-open it after an
+  // accidental close.
+  useEffect(() => {
+    if (voting.status === "open" && voting.reel_id) {
+      setPrevVotingReel(voting.reel_id);
+    }
+  }, [voting.status, voting.reel_id]);
 
   const playbackIdx = useMemo(
     () => REELS.findIndex((r) => r.reel_id === playback.reel_id),
@@ -168,6 +177,20 @@ function Panel() {
     }
   };
 
+  const reopenPrevVoting = () => {
+    if (!prevVotingReel) return;
+    sendVoting({
+      reel_id: prevVotingReel,
+      status: "open",
+      opened_at: Date.now(),
+      closed_at: null,
+    });
+  };
+
+  const canReopenPrev =
+    !!prevVotingReel &&
+    !(voting.status === "open" && voting.reel_id === prevVotingReel);
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-mono">
       <TopBar playback={playback} voting={voting} />
@@ -181,6 +204,8 @@ function Panel() {
         onNext={onNext}
         onStop={onStop}
         onToggleVoting={toggleVoting}
+        onReopenPrevVoting={reopenPrevVoting}
+        canReopenPrev={canReopenPrev}
       />
       <Library
         query={query}
@@ -274,6 +299,8 @@ function NowShowing({
   onNext,
   onStop,
   onToggleVoting,
+  onReopenPrevVoting,
+  canReopenPrev,
 }: {
   reel: ReturnType<typeof findReel>;
   next: ReturnType<typeof findReel>;
@@ -284,6 +311,8 @@ function NowShowing({
   onNext: () => void;
   onStop: () => void;
   onToggleVoting: () => void;
+  onReopenPrevVoting: () => void;
+  canReopenPrev: boolean;
 }) {
   const playing = playback.status === "playing";
   const votingOpen =
@@ -362,16 +391,26 @@ function NowShowing({
                 <b className="text-stone-900">{stats.topReaction ?? "—"}</b>
               </span>
             </div>
-            <button
-              onClick={onToggleVoting}
-              className={`px-4 py-2 text-xs font-semibold transition-colors ${
-                votingOpen
-                  ? "bg-red-600 text-white hover:bg-red-700"
-                  : "bg-stone-900 text-white hover:bg-stone-700"
-              }`}
-            >
-              {votingOpen ? "Close voting" : "Open voting"}
-            </button>
+            <div className="flex items-center gap-2">
+              {canReopenPrev && (
+                <button
+                  onClick={onReopenPrevVoting}
+                  className="px-3 py-2 text-xs font-medium border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors"
+                >
+                  Re-open previous
+                </button>
+              )}
+              <button
+                onClick={onToggleVoting}
+                className={`px-4 py-2 text-xs font-semibold transition-colors ${
+                  votingOpen
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : "bg-stone-900 text-white hover:bg-stone-700"
+                }`}
+              >
+                {votingOpen ? "Close voting" : "Open voting"}
+              </button>
+            </div>
           </div>
         )}
       </div>
