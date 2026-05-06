@@ -1,78 +1,123 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePlaybackSubscriber } from "@/lib/channels";
 import { REELS, findReel } from "@/lib/reels";
 
+type Slot = "A" | "B";
+
 export default function HallPage() {
   const state = usePlaybackSubscriber();
-  const reel = findReel(state.reel_id);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const adminReel = findReel(state.reel_id);
 
-  const currentIdx = reel ? REELS.findIndex((r) => r.reel_id === reel.reel_id) : -1;
-  const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] : null;
+  // Pre-show: admin hasn't broadcast yet. Autoplay the first reel muted so
+  // the screen looks live (browsers only allow muted autoplay without a gesture).
+  const isPreShow = state.reel_id === null && state.status === "stopped";
+  const isAdminStop = state.reel_id !== null && state.status === "stopped";
+  const reel = adminReel ?? REELS[0] ?? null;
+  const isPlaying = isPreShow || state.status === "playing";
 
-  // Single effect: swap src only when the reel actually changes, then start
-  // playback as soon as the element has enough data. Prevents the race where
-  // play() fires before load() finishes and stalls for a beat.
+  const aRef = useRef<HTMLVideoElement>(null);
+  const bRef = useRef<HTMLVideoElement>(null);
+  const [active, setActive] = useState<Slot>("A");
+  const slotReel = useRef<{ A: string | null; B: string | null }>({
+    A: null,
+    B: null,
+  });
+
+  const currentIdx = reel
+    ? REELS.findIndex((r) => r.reel_id === reel.reel_id)
+    : -1;
+  const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] ?? null : null;
+
+  // Drive the active slot to show the current reel. If the inactive slot has
+  // already preloaded the new reel, the swap is instant — just a 500ms opacity
+  // crossfade. Otherwise we load it, wait for canplay, then swap.
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    if (isAdminStop || !reel) return;
+    const aVideo = aRef.current;
+    const bVideo = bRef.current;
+    if (!aVideo || !bVideo) return;
 
-    if (reel) {
-      const srcMatches = video.src.endsWith(reel.file_path);
-      if (!srcMatches) {
-        video.src = reel.file_path;
-        video.load();
+    const target = reel.reel_id;
+    const activeVideo = active === "A" ? aVideo : bVideo;
+
+    if (slotReel.current[active] === target) {
+      if (isPlaying) activeVideo.play().catch(() => {});
+      else activeVideo.pause();
+      return;
+    }
+
+    if (slotReel.current[active] === null) {
+      activeVideo.src = reel.file_path;
+      activeVideo.load();
+      slotReel.current[active] = target;
+      const start = () => {
+        if (isPlaying) activeVideo.play().catch(() => {});
+      };
+      if (activeVideo.readyState >= 3) {
+        start();
+        return;
       }
+      activeVideo.addEventListener("canplay", start, { once: true });
+      return () => activeVideo.removeEventListener("canplay", start);
     }
 
-    if (state.status !== "playing" || !reel) {
-      video.pause();
-      return;
+    const inactive: Slot = active === "A" ? "B" : "A";
+    const inactiveVideo = inactive === "A" ? aVideo : bVideo;
+
+    if (slotReel.current[inactive] !== target) {
+      inactiveVideo.src = reel.file_path;
+      inactiveVideo.load();
+      slotReel.current[inactive] = target;
     }
 
-    const tryPlay = () => {
-      video.play().catch(() => {
-        // Autoplay may need a one-time tap on the hall laptop.
-      });
+    const swap = () => {
+      if (isPlaying) inactiveVideo.play().catch(() => {});
+      setActive(inactive);
+      window.setTimeout(() => activeVideo.pause(), 500);
     };
 
-    if (video.readyState >= 2) {
-      tryPlay();
+    if (inactiveVideo.readyState >= 3) {
+      swap();
       return;
     }
+    inactiveVideo.addEventListener("canplay", swap, { once: true });
+    return () => inactiveVideo.removeEventListener("canplay", swap);
+  }, [reel, isPlaying, isAdminStop, active]);
 
-    video.addEventListener("canplay", tryPlay, { once: true });
-    return () => {
-      video.removeEventListener("canplay", tryPlay);
-    };
-  }, [reel, state.status]);
+  // Preload the next reel into whichever slot is currently inactive, so the
+  // next swap is a fade not a fetch.
+  useEffect(() => {
+    if (!nextReel || !reel) return;
+    const inactive: Slot = active === "A" ? "B" : "A";
+    if (slotReel.current[inactive] === nextReel.reel_id) return;
+    if (slotReel.current[inactive] === reel.reel_id) return;
+    const inactiveVideo = (inactive === "A" ? aRef : bRef).current;
+    if (!inactiveVideo) return;
+    inactiveVideo.src = nextReel.file_path;
+    inactiveVideo.load();
+    slotReel.current[inactive] = nextReel.reel_id;
+  }, [nextReel, active, reel]);
 
-  if (state.status === "stopped" || !reel) {
-    return <HoldingSlate />;
-  }
+  if (isAdminStop) return <HoldingSlate />;
 
   return (
     <div className="fixed inset-0 bg-black">
       <video
-        ref={videoRef}
-        className="w-full h-full object-contain"
+        ref={aRef}
+        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${active === "A" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
         playsInline
-        autoPlay
+        muted={isPreShow}
         preload="auto"
       />
-      {/* Warm the browser cache for the next reel so Next is instant. */}
-      {nextReel && (
-        <video
-          key={nextReel.reel_id}
-          src={nextReel.file_path}
-          preload="auto"
-          muted
-          playsInline
-          className="hidden"
-        />
-      )}
+      <video
+        ref={bRef}
+        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${active === "B" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+        playsInline
+        muted={isPreShow}
+        preload="auto"
+      />
     </div>
   );
 }
@@ -83,9 +128,7 @@ function HoldingSlate() {
       <div className="text-[10px] tracking-[0.4em] text-white/50">
         INDIAN SCROLL FESTIVAL · 2026
       </div>
-      <div className="mt-6 text-5xl font-semibold tracking-tight">
-        ISF
-      </div>
+      <div className="mt-6 text-5xl font-semibold tracking-tight">ISF</div>
       <div className="mt-2 text-white/40 text-sm">
         Bangalore International Centre · 16 May 2026
       </div>

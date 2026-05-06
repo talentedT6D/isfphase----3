@@ -81,11 +81,15 @@ function Panel() {
   const { state: voting, broadcast: sendVoting } =
     useVotingBroadcaster(INITIAL_VOTING);
 
-  // Admin keeps its own queue pointers, independent of state
-  const [playbackIdx, setPlaybackIdx] = useState(0);
-  const [votingIdx, setVotingIdx] = useState(0);
-  const [prevVotingReel, setPrevVotingReel] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+
+  const playbackIdx = useMemo(
+    () => REELS.findIndex((r) => r.reel_id === playback.reel_id),
+    [playback.reel_id],
+  );
+  const playbackReel = playbackIdx >= 0 ? REELS[playbackIdx] : null;
+  const nextReel =
+    playbackIdx >= 0 ? REELS[playbackIdx + 1] ?? null : REELS[0] ?? null;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,19 +102,15 @@ function Panel() {
     );
   }, [query]);
 
-  const playbackReel = REELS[playbackIdx] ?? null;
-  const playbackNext = REELS[playbackIdx + 1] ?? null;
-  const votingReel = REELS[votingIdx] ?? null;
-  const votingNext = REELS[votingIdx + 1] ?? null;
-
-  // Voting actions (declared first so playback actions can reuse openVoting)
-  const openVoting = (idx: number) => {
+  // One-shot action: cue a reel, start it on the hall screen, and open voting.
+  const playReel = (idx: number) => {
     const reel = REELS[idx];
     if (!reel) return;
-    if (voting.reel_id && voting.reel_id !== reel.reel_id) {
-      setPrevVotingReel(voting.reel_id);
-    }
-    setVotingIdx(idx);
+    sendPlayback({
+      reel_id: reel.reel_id,
+      status: "playing",
+      timestamp: Date.now(),
+    });
     sendVoting({
       reel_id: reel.reel_id,
       status: "open",
@@ -119,107 +119,75 @@ function Panel() {
     });
   };
 
-  // Playback actions
-  const cueAndPlay = (idx: number) => {
-    const reel = REELS[idx];
-    if (!reel) return;
-    setPlaybackIdx(idx);
-    sendPlayback({
-      reel_id: reel.reel_id,
-      status: "playing",
-      timestamp: Date.now(),
-    });
-  };
-  const onPlay = () => {
-    if (!playbackReel) return;
+  const onPlayPause = () => {
+    if (!playbackReel) {
+      playReel(0);
+      return;
+    }
     sendPlayback({
       reel_id: playbackReel.reel_id,
-      status: "playing",
+      status: playback.status === "playing" ? "paused" : "playing",
       timestamp: Date.now(),
     });
   };
-  const onPause = () => {
-    if (!playbackReel) return;
-    sendPlayback({
-      reel_id: playbackReel.reel_id,
-      status: "paused",
-      timestamp: Date.now(),
-    });
+
+  const onPrev = () => {
+    if (playbackIdx <= 0) return;
+    playReel(playbackIdx - 1);
   };
+
+  const onNext = () => {
+    if (playbackIdx < 0) {
+      playReel(0);
+      return;
+    }
+    if (playbackIdx >= REELS.length - 1) return;
+    playReel(playbackIdx + 1);
+  };
+
   const onStop = () => {
     sendPlayback({ reel_id: null, status: "stopped", timestamp: Date.now() });
+    if (voting.status === "open") {
+      sendVoting({ ...voting, status: "closed", closed_at: Date.now() });
+    }
   };
-  const onPrev = () => {
-    const idx = Math.max(0, playbackIdx - 1);
-    cueAndPlay(idx);
-    openVoting(idx);
-  };
-  const onNext = () => {
-    const idx = Math.min(REELS.length - 1, playbackIdx + 1);
-    cueAndPlay(idx);
-    openVoting(idx);
-  };
-  const closeVotingAndAdvance = () => {
-    if (voting.reel_id) setPrevVotingReel(voting.reel_id);
-    sendVoting({
-      ...voting,
-      status: "closed",
-      closed_at: Date.now(),
-    });
-    setVotingIdx((i) => Math.min(REELS.length - 1, i + 1));
-  };
-  const pauseVoting = () => {
-    sendVoting({ ...voting, status: "closed", closed_at: Date.now() });
-  };
-  const reopenPrevious = () => {
-    if (!prevVotingReel) return;
-    sendVoting({
-      reel_id: prevVotingReel,
-      status: "open",
-      opened_at: Date.now(),
-      closed_at: null,
-    });
-    const idx = REELS.findIndex((r) => r.reel_id === prevVotingReel);
-    if (idx >= 0) setVotingIdx(idx);
-  };
-  const changeNextVoting = () => {
-    setVotingIdx((i) => Math.min(REELS.length - 1, i + 1));
+
+  const toggleVoting = () => {
+    if (!playbackReel) return;
+    const isOpenForCurrent =
+      voting.status === "open" && voting.reel_id === playbackReel.reel_id;
+    if (isOpenForCurrent) {
+      sendVoting({ ...voting, status: "closed", closed_at: Date.now() });
+    } else {
+      sendVoting({
+        reel_id: playbackReel.reel_id,
+        status: "open",
+        opened_at: Date.now(),
+        closed_at: null,
+      });
+    }
   };
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-mono">
       <TopBar playback={playback} voting={voting} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 divide-x divide-stone-300 border-b border-stone-300">
-        <PlaybackZone
-          reel={playbackReel}
-          next={playbackNext}
-          state={playback}
-          onPlay={onPlay}
-          onPause={onPause}
-          onStop={onStop}
-          onPrev={onPrev}
-          onNext={onNext}
-          onCueFromLibrary={() => cueAndPlay(playbackIdx)}
-        />
-        <VotingZone
-          reel={votingReel}
-          next={votingNext}
-          state={voting}
-          onOpen={() => openVoting(votingIdx)}
-          onCloseAdvance={closeVotingAndAdvance}
-          onPause={pauseVoting}
-          onReopenPrev={reopenPrevious}
-          onChangeNext={changeNextVoting}
-        />
-      </div>
+      <NowShowing
+        reel={playbackReel}
+        next={nextReel}
+        playback={playback}
+        voting={voting}
+        onPlayPause={onPlayPause}
+        onPrev={onPrev}
+        onNext={onNext}
+        onStop={onStop}
+        onToggleVoting={toggleVoting}
+      />
       <Library
         query={query}
         onQueryChange={setQuery}
         reels={filtered}
         playbackReelId={playbackReel?.reel_id ?? null}
-        votingReelId={votingReel?.reel_id ?? null}
-        onCuePlayback={(idx) => cueAndPlay(idx)}
-        onQueueVoting={(idx) => setVotingIdx(idx)}
+        onPlay={playReel}
       />
       <VoterList
         reelId={voting.reel_id}
@@ -242,25 +210,25 @@ function TopBar({
   };
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-stone-300 bg-white text-xs">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <span className="font-semibold tracking-wider">ISF · ADMIN</span>
-        <span className="flex items-center gap-1.5 text-stone-600">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          Supabase connected
-        </span>
-        <span className="text-stone-400">·</span>
-        <span className="text-stone-600">{REELS.length} reels loaded</span>
-        <span className="text-stone-400">·</span>
-        <span className="text-stone-600">
-          Playback {playback.status} · Voting {voting.status}
-        </span>
+        <Pill tone={playback.status === "playing" ? "live" : "muted"}>
+          {playback.status === "playing"
+            ? "On stage"
+            : playback.status === "paused"
+              ? "Paused"
+              : "Off air"}
+        </Pill>
+        <Pill tone={voting.status === "open" ? "vote" : "muted"}>
+          {voting.status === "open" ? "Voting open" : "Voting closed"}
+        </Pill>
       </div>
       <div className="flex items-center gap-3">
         <a
           href="/leaderboard"
           target="_blank"
           rel="noreferrer"
-          className="text-stone-700 hover:text-stone-900 underline underline-offset-2"
+          className="text-stone-600 hover:text-stone-900 underline underline-offset-2"
         >
           Leaderboard ↗
         </a>
@@ -275,180 +243,164 @@ function TopBar({
   );
 }
 
-function PlaybackZone({
+function Pill({
+  tone,
+  children,
+}: {
+  tone: "live" | "vote" | "muted";
+  children: React.ReactNode;
+}) {
+  const map = {
+    live: "bg-emerald-100 text-emerald-800",
+    vote: "bg-sky-100 text-sky-800",
+    muted: "bg-stone-100 text-stone-600",
+  } as const;
+  return (
+    <span
+      className={`${map[tone]} px-2 py-0.5 rounded-full text-[10px] tracking-wider`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function NowShowing({
   reel,
   next,
-  state,
-  onPlay,
-  onPause,
-  onStop,
+  playback,
+  voting,
+  onPlayPause,
   onPrev,
   onNext,
-  onCueFromLibrary,
+  onStop,
+  onToggleVoting,
 }: {
   reel: ReturnType<typeof findReel>;
   next: ReturnType<typeof findReel>;
-  state: PlaybackState;
-  onPlay: () => void;
-  onPause: () => void;
-  onStop: () => void;
+  playback: PlaybackState;
+  voting: VotingState;
+  onPlayPause: () => void;
   onPrev: () => void;
   onNext: () => void;
-  onCueFromLibrary: () => void;
+  onStop: () => void;
+  onToggleVoting: () => void;
 }) {
-  const playing = state.status === "playing";
+  const playing = playback.status === "playing";
+  const votingOpen =
+    voting.status === "open" && voting.reel_id === reel?.reel_id;
+  const stats = useVoteStats(votingOpen ? voting.reel_id : null);
+
   return (
-    <section className="p-5 bg-white">
-      <header className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold tracking-wider">
-          PLAYBACK CONTROL
-        </h2>
-        <span className="text-[10px] text-stone-500 tracking-wider">
-          DRIVES HALL SCREEN
-        </span>
-      </header>
+    <section className="p-5 bg-white border-b border-stone-300">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+            {reel ? "NOW SHOWING" : "READY"}
+          </h2>
+          {reel && next && (
+            <span className="text-[10px] text-stone-400 tracking-wider">
+              UP NEXT · {next.title}
+            </span>
+          )}
+        </div>
 
-      <Card label="NOW PLAYING ON STAGE" live={playing}>
-        {reel ? (
-          <>
-            <div className="text-xs text-stone-500">
-              {reel.category} · {formatRuntime(reel.runtime)}
-            </div>
-            <div className="text-lg font-semibold mt-1">{reel.title}</div>
-            <div className="text-sm text-stone-600">by {reel.creator}</div>
-          </>
-        ) : (
-          <div className="text-sm text-stone-500">No reel cued.</div>
-        )}
-      </Card>
-
-      <div className="flex flex-wrap gap-2 mt-4">
-        <Btn onClick={onPrev}>⏮ Prev</Btn>
-        {playing ? (
-          <Btn onClick={onPause} primary>
-            ⏸ Pause
-          </Btn>
-        ) : (
-          <Btn onClick={onPlay} primary>
-            ▶ Play
-          </Btn>
-        )}
-        <Btn onClick={onNext}>⏭ Next</Btn>
-        <Btn onClick={onStop}>⏹ Stop</Btn>
-        <Btn onClick={onCueFromLibrary}>Cue from library</Btn>
-      </div>
-
-      <div className="mt-5">
-        <Card label="UP NEXT">
-          {next ? (
+        <div className="border border-stone-300 bg-stone-50 p-5">
+          {reel ? (
             <>
-              <div className="text-xs text-stone-500">
-                {next.category} · {formatRuntime(next.runtime)}
+              <div className="text-[10px] tracking-wider text-stone-500 mb-1">
+                {reel.category} · {formatRuntime(reel.runtime)}
               </div>
-              <div className="text-base font-semibold mt-1">{next.title}</div>
-              <div className="text-sm text-stone-600">by {next.creator}</div>
+              <div className="text-2xl font-semibold">{reel.title}</div>
+              <div className="text-stone-600">by {reel.creator}</div>
             </>
           ) : (
-            <div className="text-sm text-stone-500">End of playlist.</div>
+            <div className="text-stone-500 text-sm">
+              Hit Play to start with the first reel, or pick one from the
+              library below.
+            </div>
           )}
-        </Card>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
+          <BigBtn
+            onClick={onPrev}
+            disabled={!reel || playback.reel_id === REELS[0]?.reel_id}
+          >
+            ⏮ Prev
+          </BigBtn>
+          <BigBtn onClick={onPlayPause} primary>
+            {playing ? "⏸ Pause" : "▶ Play"}
+          </BigBtn>
+          <BigBtn
+            onClick={onNext}
+            disabled={
+              reel != null &&
+              playback.reel_id === REELS[REELS.length - 1]?.reel_id
+            }
+          >
+            ⏭ Next
+          </BigBtn>
+          <BigBtn onClick={onStop} disabled={!reel}>
+            ⏹ Stop
+          </BigBtn>
+        </div>
+
+        {reel && (
+          <div className="mt-5 border-t border-stone-200 pt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-5 text-xs text-stone-600">
+              <span>
+                <b className="text-stone-900">{stats.count}</b> votes
+              </span>
+              <span>
+                avg{" "}
+                <b className="text-stone-900">
+                  {stats.count ? stats.avg.toFixed(1) : "—"}
+                </b>
+              </span>
+              <span>
+                top{" "}
+                <b className="text-stone-900">{stats.topReaction ?? "—"}</b>
+              </span>
+            </div>
+            <button
+              onClick={onToggleVoting}
+              className={`px-4 py-2 text-xs font-semibold transition-colors ${
+                votingOpen
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-stone-900 text-white hover:bg-stone-700"
+              }`}
+            >
+              {votingOpen ? "Close voting" : "Open voting"}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
-function VotingZone({
-  reel,
-  next,
-  state,
-  onOpen,
-  onCloseAdvance,
-  onPause,
-  onReopenPrev,
-  onChangeNext,
+function BigBtn({
+  children,
+  onClick,
+  primary,
+  disabled,
 }: {
-  reel: ReturnType<typeof findReel>;
-  next: ReturnType<typeof findReel>;
-  state: VotingState;
-  onOpen: () => void;
-  onCloseAdvance: () => void;
-  onPause: () => void;
-  onReopenPrev: () => void;
-  onChangeNext: () => void;
+  children: React.ReactNode;
+  onClick: () => void;
+  primary?: boolean;
+  disabled?: boolean;
 }) {
-  const isOpen = state.status === "open";
-  const stats = useVoteStats(isOpen ? state.reel_id : null);
-
+  const cls = primary
+    ? "bg-stone-900 text-white hover:bg-stone-700"
+    : "bg-white border border-stone-300 text-stone-800 hover:bg-stone-100";
   return (
-    <section className="p-5 bg-white">
-      <header className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold tracking-wider">
-          VOTING CONTROL
-        </h2>
-        <span className="text-[10px] text-stone-500 tracking-wider">
-          DRIVES VOTER PHONES
-        </span>
-      </header>
-
-      <Card
-        label={isOpen ? "CURRENTLY OPEN FOR VOTING" : "VOTING IDLE"}
-        live={isOpen}
-      >
-        {reel ? (
-          <>
-            <div className="text-xs text-stone-500">{reel.category}</div>
-            <div className="text-lg font-semibold mt-1">{reel.title}</div>
-            <div className="text-sm text-stone-600">by {reel.creator}</div>
-          </>
-        ) : (
-          <div className="text-sm text-stone-500">No reel queued.</div>
-        )}
-
-        <div className="grid grid-cols-3 gap-3 mt-4 text-xs">
-          <Stat label="Votes cast" value={stats.count.toString()} />
-          <Stat
-            label="Avg score"
-            value={stats.count ? stats.avg.toFixed(1) : "—"}
-          />
-          <Stat
-            label="Top reaction"
-            value={stats.topReaction ?? "—"}
-          />
-        </div>
-      </Card>
-
-      <div className="flex flex-wrap gap-2 mt-4">
-        {!isOpen && (
-          <Btn onClick={onOpen} primary>
-            Open voting
-          </Btn>
-        )}
-        {isOpen && (
-          <Btn onClick={onCloseAdvance} primary>
-            Close &amp; advance
-          </Btn>
-        )}
-        <Btn onClick={onPause}>Pause voting</Btn>
-        <Btn onClick={onReopenPrev}>Re-open previous</Btn>
-      </div>
-
-      <div className="mt-5">
-        <Card label="UP NEXT FOR VOTING">
-          {next ? (
-            <>
-              <div className="text-xs text-stone-500">{next.category}</div>
-              <div className="text-base font-semibold mt-1">{next.title}</div>
-              <div className="text-sm text-stone-600">by {next.creator}</div>
-              <div className="mt-3">
-                <Btn onClick={onChangeNext}>Change next reel</Btn>
-              </div>
-            </>
-          ) : (
-            <div className="text-sm text-stone-500">End of queue.</div>
-          )}
-        </Card>
-      </div>
-    </section>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${cls} px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -457,69 +409,59 @@ function Library({
   onQueryChange,
   reels,
   playbackReelId,
-  votingReelId,
-  onCuePlayback,
-  onQueueVoting,
+  onPlay,
 }: {
   query: string;
   onQueryChange: (q: string) => void;
   reels: readonly (typeof REELS)[number][];
   playbackReelId: string | null;
-  votingReelId: string | null;
-  onCuePlayback: (idx: number) => void;
-  onQueueVoting: (idx: number) => void;
+  onPlay: (idx: number) => void;
 }) {
   return (
     <section className="p-5 bg-stone-50">
-      <header className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold tracking-wider">
-          REEL LIBRARY · {REELS.length} TOTAL
+      <header className="flex items-center justify-between mb-3 max-w-3xl mx-auto">
+        <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+          REEL LIBRARY · {REELS.length}
         </h2>
         <input
           type="text"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search title, creator, category…"
-          className="border border-stone-300 px-2 py-1 text-xs bg-white w-64 focus:outline-none focus:border-stone-900"
+          className="border border-stone-300 px-3 py-1.5 text-sm bg-white w-64 focus:outline-none focus:border-stone-900"
         />
       </header>
-
-      <div className="bg-white border border-stone-300 divide-y divide-stone-200">
+      <div className="bg-white border border-stone-300 divide-y divide-stone-200 max-w-3xl mx-auto">
         {reels.map((reel) => {
           const idx = REELS.indexOf(reel);
           const isPlayback = reel.reel_id === playbackReelId;
-          const isVoting = reel.reel_id === votingReelId;
           return (
             <div
               key={reel.reel_id}
-              className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 px-3 py-2 text-xs"
+              className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-3 py-2.5 ${
+                isPlayback ? "bg-emerald-50" : ""
+              }`}
             >
-              <span className="text-stone-400">#{idx + 1}</span>
-              <div>
-                <div className="font-semibold text-sm">{reel.title}</div>
-                <div className="text-stone-500">
+              <span className="text-stone-400 text-xs">#{idx + 1}</span>
+              <div className="min-w-0">
+                <div className="font-semibold text-sm truncate">
+                  {reel.title}
+                </div>
+                <div className="text-stone-500 text-xs truncate">
                   {reel.creator} · {reel.category} ·{" "}
                   {formatRuntime(reel.runtime)}
                 </div>
               </div>
-              <div className="flex gap-2">
-                {isPlayback && (
-                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5">
-                    on stage
-                  </span>
-                )}
-                {isVoting && (
-                  <span className="text-[10px] bg-sky-100 text-sky-700 px-1.5 py-0.5">
-                    voting
-                  </span>
-                )}
-                <Btn onClick={() => onCuePlayback(idx)} small>
-                  Cue playback
-                </Btn>
-                <Btn onClick={() => onQueueVoting(idx)} small>
-                  Queue voting
-                </Btn>
-              </div>
+              <button
+                onClick={() => onPlay(idx)}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isPlayback
+                    ? "bg-emerald-600 text-white"
+                    : "bg-stone-900 text-white hover:bg-stone-700"
+                }`}
+              >
+                {isPlayback ? "On stage" : "Play this"}
+              </button>
             </div>
           );
         })}
@@ -533,64 +475,6 @@ function Library({
   );
 }
 
-function Card({
-  label,
-  live,
-  children,
-}: {
-  label: string;
-  live?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border border-stone-300 bg-white">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-200 text-[10px] tracking-wider text-stone-500">
-        <span>{label}</span>
-        {live && (
-          <span className="flex items-center gap-1 text-red-600 font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-            LIVE
-          </span>
-        )}
-      </div>
-      <div className="p-3">{children}</div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border border-stone-200 px-2 py-1.5 bg-stone-50">
-      <div className="text-[10px] text-stone-500">{label}</div>
-      <div className="text-sm font-semibold">{value}</div>
-    </div>
-  );
-}
-
-function Btn({
-  children,
-  onClick,
-  primary,
-  small,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  primary?: boolean;
-  small?: boolean;
-}) {
-  const base = small ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-xs";
-  const cls = primary
-    ? "bg-stone-900 text-white hover:bg-stone-700"
-    : "bg-white border border-stone-300 text-stone-800 hover:bg-stone-100";
-  return (
-    <button onClick={onClick} className={`${base} ${cls} transition-colors`}>
-      {children}
-    </button>
-  );
-}
-
-// Live vote aggregate for a single reel. Uses Realtime on the votes table
-// (admin role reads via RLS policy you enable in supabase-setup.sql).
 function useVoteStats(reelId: string | null) {
   const [stats, setStats] = useState<{
     count: number;
@@ -718,39 +602,38 @@ function VoterList({
   const voters = useVoters(reelId);
   return (
     <section className="p-5 bg-white border-t border-stone-300">
-      <header className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold tracking-wider">
-          VOTERS {reelTitle ? `· ${reelTitle}` : ""} · {voters.length} TOTAL
+      <header className="flex items-center justify-between mb-3 max-w-3xl mx-auto">
+        <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+          VOTERS {reelTitle ? `· ${reelTitle}` : ""} · {voters.length}
         </h2>
-        <span className="text-[10px] text-stone-500 tracking-wider">
-          LIVE FROM SUPABASE
-        </span>
       </header>
-      {!reelId ? (
-        <div className="text-sm text-stone-500">
-          Open voting on a reel to see voters here.
-        </div>
-      ) : voters.length === 0 ? (
-        <div className="text-sm text-stone-500">No votes yet.</div>
-      ) : (
-        <div className="bg-white border border-stone-300 divide-y divide-stone-200">
-          {voters.map((v, i) => (
-            <div
-              key={`${v.user_id}-${i}`}
-              className="grid grid-cols-[3rem_1fr_5rem_5rem] items-center gap-3 px-3 py-2 text-xs"
-            >
-              <span className="text-stone-400">#{i + 1}</span>
-              <span className="font-semibold text-sm">
-                {v.user_name ?? v.user_id.slice(0, 8)}
-              </span>
-              <span className="text-stone-600">{v.reaction ?? "—"}</span>
-              <span className="font-mono tabular-nums text-right">
-                {v.score}/100
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="max-w-3xl mx-auto">
+        {!reelId ? (
+          <div className="text-sm text-stone-500">
+            Voters appear here once voting is open.
+          </div>
+        ) : voters.length === 0 ? (
+          <div className="text-sm text-stone-500">No votes yet.</div>
+        ) : (
+          <div className="bg-white border border-stone-300 divide-y divide-stone-200">
+            {voters.map((v, i) => (
+              <div
+                key={`${v.user_id}-${i}`}
+                className="grid grid-cols-[2.5rem_1fr_5rem_5rem] items-center gap-3 px-3 py-2 text-xs"
+              >
+                <span className="text-stone-400">#{i + 1}</span>
+                <span className="font-semibold text-sm truncate">
+                  {v.user_name ?? v.user_id.slice(0, 8)}
+                </span>
+                <span className="text-stone-600">{v.reaction ?? "—"}</span>
+                <span className="font-mono tabular-nums text-right">
+                  {v.score}/100
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
