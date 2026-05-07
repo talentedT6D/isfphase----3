@@ -58,14 +58,22 @@ function LiveStage({ state }: { state: PlaybackState }) {
     B: null,
   });
 
+  // Park the inactive slot off-screen below the viewport so the first swap
+  // can slide it up into place. We set transforms imperatively (not via the
+  // JSX style prop) so React re-renders never overwrite a transition mid-flight.
+  useEffect(() => {
+    if (aRef.current) aRef.current.style.transform = "translate3d(0,0,0)";
+    if (bRef.current) bRef.current.style.transform = "translate3d(0,100%,0)";
+  }, []);
+
   const currentIdx = reel
     ? REELS.findIndex((r) => r.reel_id === reel.reel_id)
     : -1;
   const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] ?? null : null;
 
-  // Drive the active slot to show the current reel. If the inactive slot has
-  // already preloaded the new reel (the common case once a show is running),
-  // the swap is a 500ms opacity crossfade with no buffering pause.
+  // Drive the active slot to show the current reel. Transitions slide the new
+  // reel up from below (Instagram-reel style) while the outgoing reel slides
+  // off the top edge.
   useEffect(() => {
     if (!reel) return;
     const aVideo = aRef.current;
@@ -106,9 +114,22 @@ function LiveStage({ state }: { state: PlaybackState }) {
 
     const swap = () => {
       if (isPlaying) inactiveVideo.play().catch(() => {});
-      // Pause the outgoing slot immediately on its current frame; the opacity
-      // transition fades out the frozen frame underneath the new playback.
+
+      // Snap the incoming slot to the off-screen-below position with no
+      // transition (it may have been parked at -100% from the previous swap),
+      // force a reflow, then animate it up to 0 alongside the outgoing slot.
+      const easing = "cubic-bezier(0.22, 1, 0.36, 1)";
+      inactiveVideo.style.transition = "none";
+      inactiveVideo.style.transform = "translate3d(0,100%,0)";
+      // Force reflow so the next transition takes effect.
+      void inactiveVideo.offsetHeight;
+      inactiveVideo.style.transition = `transform 450ms ${easing}`;
+      inactiveVideo.style.transform = "translate3d(0,0,0)";
+
+      activeVideo.style.transition = `transform 450ms ${easing}`;
+      activeVideo.style.transform = "translate3d(0,-100%,0)";
       activeVideo.pause();
+
       setActive(inactive);
     };
 
@@ -137,20 +158,18 @@ function LiveStage({ state }: { state: PlaybackState }) {
   if (!reel) return <HoldingSlate />;
 
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-black overflow-hidden">
       <video
         ref={aRef}
-        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${
-          active === "A" ? "opacity-100 z-10" : "opacity-0 z-0"
-        }`}
+        className="absolute inset-0 w-full h-full object-contain"
+        style={{ willChange: "transform" }}
         playsInline
         preload="auto"
       />
       <video
         ref={bRef}
-        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${
-          active === "B" ? "opacity-100 z-10" : "opacity-0 z-0"
-        }`}
+        className="absolute inset-0 w-full h-full object-contain"
+        style={{ willChange: "transform" }}
         playsInline
         preload="auto"
       />
