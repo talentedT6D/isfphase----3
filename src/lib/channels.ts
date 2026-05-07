@@ -1,7 +1,9 @@
 "use client";
 
-// Realtime broadcast channels. State is transient — if admin reloads,
-// they rebroadcast the current state. No rows involved. Spec §6.3.
+// Realtime broadcast channels for live updates, with the latest state also
+// mirrored into a tiny `public.app_state` table so a refresh always lands
+// on the current reel even if no admin tab is online to answer a
+// request-state ping.
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabase";
@@ -27,7 +29,10 @@ export interface VotingState {
 const PLAYBACK_CHANNEL = "playback";
 const VOTING_CHANNEL = "voting";
 const STATE_EVENT = "state";
-const REQUEST_EVENT = "request_state"; // admin rebroadcasts on request
+const REQUEST_EVENT = "request_state";
+
+const PLAYBACK_KEY = "playback";
+const VOTING_KEY = "voting";
 
 export const INITIAL_PLAYBACK: PlaybackState = {
   reel_id: null,
@@ -42,81 +47,143 @@ export const INITIAL_VOTING: VotingState = {
   closed_at: null,
 };
 
-// Hook: subscribe to a broadcast channel as a read-only listener.
-// Returns the latest state and a helper to request the admin rebroadcast.
-export function usePlaybackSubscriber() {
-  const [state, setState] = useState<PlaybackState>(INITIAL_PLAYBACK);
-  const channelRef = useRef<RealtimeChannel | null>(null);
+async function loadState<T>(key: string): Promise<T | null> {
+  const { data, error } = await supabase
+    .from("app_state")
+    .select("value")
+    .eq("key", key)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data.value as T;
+}
+
+async function persistState(key: string, value: unknown) {
+  const { error } = await supabase
+    .from("app_state")
+    .upsert({ key, value, updated_at: new Date().toISOString() });
+  if (error) console.error(`[app_state] upsert ${key} failed`, error);
+}
+
+// Subscribe-to-changes hook for a single app_state row plus the broadcast
+// channel. The DB row is the source of truth on mount; broadcasts give
+// low-latency live updates between refreshes.
+function useSyncedState<T>(
+  channelName: string,
+  key: string,
+  initial: T,
+): T {
+  const [state, setState] = useState<T>(initial);
 
   useEffect(() => {
-    const ch = supabase.channel(PLAYBACK_CHANNEL, {
+    let cancelled = false;
+
+    // 1. Load whatever the DB says is current.
+    loadState<T>(key).then((value) => {
+      if (cancelled || !value) return;
+      setState(value);
+    });
+
+    // 2. Live updates over the broadcast channel (fast path).
+    const ch = supabase.channel(channelName, {
       config: { broadcast: { self: false } },
     });
     ch.on("broadcast", { event: STATE_EVENT }, ({ payload }) => {
-      setState(payload as PlaybackState);
+      setState(payload as T);
     });
     ch.subscribe((status) => {
       if (status === "SUBSCRIBED") {
         ch.send({ type: "broadcast", event: REQUEST_EVENT, payload: {} });
       }
     });
-    channelRef.current = ch;
+
+    // 3. Postgres changes as a backup live channel — also fires if a sibling
+    //    admin tab persists state without us hearing the broadcast.
+    const dbCh = supabase
+      .channel(`${channelName}-db`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "app_state",
+          filter: `key=eq.${key}`,
+        },
+        (payload) => {
+          const row = payload.new as { value: T } | null;
+          if (row?.value) setState(row.value);
+        },
+      )
+      .subscribe();
+
     return () => {
+      cancelled = true;
       supabase.removeChannel(ch);
-      channelRef.current = null;
+      supabase.removeChannel(dbCh);
     };
-  }, []);
+  }, [channelName, key]);
 
   return state;
+}
+
+export function usePlaybackSubscriber() {
+  return useSyncedState<PlaybackState>(
+    PLAYBACK_CHANNEL,
+    PLAYBACK_KEY,
+    INITIAL_PLAYBACK,
+  );
 }
 
 export function useVotingSubscriber() {
-  const [state, setState] = useState<VotingState>(INITIAL_VOTING);
-
-  useEffect(() => {
-    const ch = supabase.channel(VOTING_CHANNEL, {
-      config: { broadcast: { self: false } },
-    });
-    ch.on("broadcast", { event: STATE_EVENT }, ({ payload }) => {
-      setState(payload as VotingState);
-    });
-    ch.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        ch.send({ type: "broadcast", event: REQUEST_EVENT, payload: {} });
-      }
-    });
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, []);
-
-  return state;
+  return useSyncedState<VotingState>(
+    VOTING_CHANNEL,
+    VOTING_KEY,
+    INITIAL_VOTING,
+  );
 }
 
-// Hook for the admin: owns the current state and broadcasts it.
-// Responds to late-join REQUEST_EVENT by rebroadcasting.
-export function usePlaybackBroadcaster(initial: PlaybackState = INITIAL_PLAYBACK) {
-  const [state, setStateInternal] = useState<PlaybackState>(initial);
+// Broadcaster hook. Owns the canonical state: writes it to the DB and emits
+// it over the broadcast channel. Also rehydrates from the DB on mount, so
+// an admin reload doesn't reset the show to "stopped".
+function useSyncedBroadcaster<T>(
+  channelName: string,
+  key: string,
+  initial: T,
+) {
+  const [state, setStateInternal] = useState<T>(initial);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
   useEffect(() => {
-    const ch = supabase.channel(PLAYBACK_CHANNEL, {
+    let cancelled = false;
+
+    loadState<T>(key).then((value) => {
+      if (cancelled || !value) return;
+      stateRef.current = value;
+      setStateInternal(value);
+    });
+
+    const ch = supabase.channel(channelName, {
       config: { broadcast: { self: true, ack: false } },
     });
     ch.on("broadcast", { event: REQUEST_EVENT }, () => {
-      ch.send({ type: "broadcast", event: STATE_EVENT, payload: stateRef.current });
+      ch.send({
+        type: "broadcast",
+        event: STATE_EVENT,
+        payload: stateRef.current,
+      });
     });
     ch.subscribe();
     channelRef.current = ch;
+
     return () => {
+      cancelled = true;
       supabase.removeChannel(ch);
       channelRef.current = null;
     };
-  }, []);
+  }, [channelName, key]);
 
-  const broadcast = (next: PlaybackState) => {
+  const broadcast = (next: T) => {
     setStateInternal(next);
     stateRef.current = next;
     channelRef.current?.send({
@@ -124,41 +191,26 @@ export function usePlaybackBroadcaster(initial: PlaybackState = INITIAL_PLAYBACK
       event: STATE_EVENT,
       payload: next,
     });
+    void persistState(key, next);
   };
 
   return { state, broadcast };
+}
+
+export function usePlaybackBroadcaster(
+  initial: PlaybackState = INITIAL_PLAYBACK,
+) {
+  return useSyncedBroadcaster<PlaybackState>(
+    PLAYBACK_CHANNEL,
+    PLAYBACK_KEY,
+    initial,
+  );
 }
 
 export function useVotingBroadcaster(initial: VotingState = INITIAL_VOTING) {
-  const [state, setStateInternal] = useState<VotingState>(initial);
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
-
-  useEffect(() => {
-    const ch = supabase.channel(VOTING_CHANNEL, {
-      config: { broadcast: { self: true, ack: false } },
-    });
-    ch.on("broadcast", { event: REQUEST_EVENT }, () => {
-      ch.send({ type: "broadcast", event: STATE_EVENT, payload: stateRef.current });
-    });
-    ch.subscribe();
-    channelRef.current = ch;
-    return () => {
-      supabase.removeChannel(ch);
-      channelRef.current = null;
-    };
-  }, []);
-
-  const broadcast = (next: VotingState) => {
-    setStateInternal(next);
-    stateRef.current = next;
-    channelRef.current?.send({
-      type: "broadcast",
-      event: STATE_EVENT,
-      payload: next,
-    });
-  };
-
-  return { state, broadcast };
+  return useSyncedBroadcaster<VotingState>(
+    VOTING_CHANNEL,
+    VOTING_KEY,
+    initial,
+  );
 }
