@@ -206,18 +206,22 @@ function CornerLogout({ onLogout }: { onLogout: () => void }) {
     <button
       type="button"
       onClick={onLogout}
-      className="absolute top-4 right-4 z-20 uppercase font-bold transition-opacity hover:opacity-80 active:scale-95"
+      className="absolute top-4 right-4 z-20 uppercase transition-opacity hover:opacity-90 active:scale-95"
       style={{
-        fontFamily: "var(--font-condensed)",
-        color: "#000",
-        backgroundColor: YELLOW,
-        padding: "4px 10px",
+        fontFamily: "var(--font-display)",
+        color: "#FFFFFF",
+        backgroundColor: "#000",
+        padding: "8px 20px",
         borderRadius: 9999,
-        fontSize: "10px",
-        letterSpacing: "0.25em",
+        fontSize: "13px",
+        fontWeight: 500,
+        letterSpacing: "0.22em",
         border: 0,
         cursor: "pointer",
-        boxShadow: HALO_BOX_SHADOW,
+        textShadow:
+          "0 0 6px rgba(255,255,255,0.7), 0 0 14px rgba(255,255,255,0.4), 0 0 24px rgba(255,255,255,0.2)",
+        boxShadow:
+          "0 0 0 1px rgba(255,255,255,0.12), 0 0 22px rgba(255, 220, 210, 0.45), 0 0 50px rgba(255, 200, 180, 0.25)",
       }}
     >
       Logout
