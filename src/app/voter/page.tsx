@@ -185,34 +185,130 @@ function SignInView({
   error: string;
 }) {
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6 text-center">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo.png"
-        alt="ISF"
-        className="h-16 w-auto mb-6"
-      />
-      <div className="text-[10px] tracking-[0.3em] text-white/50 mb-3">
-        BENGALURU · 2026
+    <div className="relative min-h-screen bg-black text-white flex flex-col px-6 py-10 overflow-hidden">
+      {/* soft radial vignette so the buttons read like they're lit */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.04)_0%,_transparent_60%)]" />
+
+      <div className="relative flex-1 flex flex-col items-center justify-center w-full max-w-sm mx-auto text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Indian Scroll Festival" className="w-full max-w-[280px] h-auto" />
+
+        <p className="mt-10 text-[13px] tracking-[0.18em] uppercase leading-relaxed text-white/90">
+          Vote on the reels playing on the big screen.
+          <br />
+          Keep this tab open for the whole event.
+        </p>
+
+        <div className="w-full mt-10 space-y-4">
+          <GlowButton onClick={onSignIn} disabled={signingIn} variant="light">
+            <span className="flex-1 text-center">
+              {signingIn ? "Redirecting…" : "Sign in with Google"}
+            </span>
+            <GoogleMark />
+          </GlowButton>
+
+          <GlowButton onClick={onSignIn} disabled={signingIn} variant="dark">
+            <span className="flex-1 text-center">Join</span>
+          </GlowButton>
+        </div>
+
+        {error && (
+          <p className="text-red-400 text-xs mt-4 max-w-xs">{error}</p>
+        )}
       </div>
-      <h1 className="text-3xl font-semibold mb-2">Sign in to vote</h1>
-      <p className="text-white/60 text-sm max-w-xs mb-8">
-        Vote on the reels playing on the big screen. Keep this tab open for
-        the whole event.
-      </p>
-      <button
-        onClick={onSignIn}
-        disabled={signingIn}
-        className="w-full max-w-xs flex items-center justify-center gap-3 px-4 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90 disabled:bg-white/30 disabled:text-black/60 transition-colors"
-      >
-        <GoogleMark />
-        {signingIn ? "Redirecting…" : "Continue with Google"}
-      </button>
-      {error && <p className="text-red-400 text-xs mt-4 max-w-xs">{error}</p>}
-      <p className="text-white/30 text-[10px] mt-10">
-        Event day · 16 May 2026 · BIC Bengaluru
-      </p>
+
+      <div className="relative flex items-end justify-between gap-4">
+        <div className="flex-1 text-center text-[10px] tracking-[0.3em] uppercase text-yellow-300">
+          Bangalore International Centre · 16 May 2026
+        </div>
+        <div className="flex items-center gap-3 text-sky-400">
+          <a
+            href="https://instagram.com/indianscrollfestival"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Instagram"
+            className="hover:opacity-80"
+          >
+            <InstagramIcon />
+          </a>
+          <a
+            href="https://x.com/indianscroll"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="X"
+            className="hover:opacity-80"
+          >
+            <XIcon />
+          </a>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function GlowButton({
+  onClick,
+  disabled,
+  variant,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  variant: "light" | "dark";
+  children: React.ReactNode;
+}) {
+  const palette =
+    variant === "light"
+      ? "bg-stone-100 text-black"
+      : "bg-black text-white border border-white/15";
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`group relative w-full rounded-full ${palette} disabled:opacity-50 transition-transform active:scale-[0.99]`}
+      style={{
+        boxShadow:
+          "0 0 0 1px rgba(255,214,120,0.55), 0 0 28px rgba(255,180,80,0.35), 0 0 60px rgba(255,180,80,0.18)",
+      }}
+    >
+      <span className="flex items-center justify-center gap-3 px-6 py-4 text-[13px] tracking-[0.25em] uppercase font-medium">
+        {children}
+      </span>
+    </button>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
   );
 }
 
