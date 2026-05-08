@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useVotingSubscriber } from "@/lib/channels";
 import { findVoterReel } from "@/lib/reels";
 
 type Reaction = "LOL" | "FIRE" | "DEAD" | "KISS";
 const REACTIONS: Reaction[] = ["LOL", "FIRE", "DEAD", "KISS"];
-
-const NAME_KEY = "isf-voter-name";
-const ID_KEY = "isf-voter-id";
 
 interface VoteRow {
   reel_id: string;
@@ -22,16 +20,42 @@ interface Voter {
   name: string;
 }
 
+function voterFromSession(session: Session | null): Voter | null {
+  if (!session?.user) return null;
+  const u = session.user;
+  const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
+  const fullName = typeof meta.full_name === "string" ? meta.full_name : null;
+  const name = typeof meta.name === "string" ? meta.name : null;
+  const fallback =
+    typeof u.email === "string" && u.email.length > 0
+      ? u.email.split("@")[0]
+      : "Voter";
+  return { id: u.id, name: fullName || name || fallback };
+}
+
 export default function VoterPage() {
   const [voter, setVoter] = useState<Voter | null>(null);
   const [ready, setReady] = useState(false);
   const [myVotes, setMyVotes] = useState<VoteRow[]>([]);
+  const [signingIn, setSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState("");
 
   useEffect(() => {
-    const id = localStorage.getItem(ID_KEY);
-    const name = localStorage.getItem(NAME_KEY);
-    if (id && name) setVoter({ id, name });
-    setReady(true);
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      setVoter(voterFromSession(data.session));
+      setReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setVoter(voterFromSession(session));
+      },
+    );
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -67,20 +91,32 @@ export default function VoterPage() {
 
   if (!voter) {
     return (
-      <NameEntryView
-        onJoin={(name) => {
-          const id = cryptoRandomUUID();
-          localStorage.setItem(NAME_KEY, name);
-          localStorage.setItem(ID_KEY, id);
-          setVoter({ id, name });
+      <SignInView
+        signingIn={signingIn}
+        error={signInError}
+        onJoin={async () => {
+          setSigningIn(true);
+          setSignInError("");
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              redirectTo:
+                typeof window !== "undefined"
+                  ? `${window.location.origin}/voter`
+                  : undefined,
+            },
+          });
+          if (error) {
+            setSignInError(error.message);
+            setSigningIn(false);
+          }
         }}
       />
     );
   }
 
-  const handleLeave = () => {
-    localStorage.removeItem(NAME_KEY);
-    localStorage.removeItem(ID_KEY);
+  const handleLeave = async () => {
+    await supabase.auth.signOut();
     setVoter(null);
     setMyVotes([]);
   };
@@ -130,7 +166,7 @@ export default function VoterPage() {
           onClick={handleLeave}
           className="text-white/60 hover:text-white"
         >
-          Leave
+          Sign out
         </button>
       </header>
       <main className="flex-1 flex flex-col">{body}</main>
@@ -138,14 +174,15 @@ export default function VoterPage() {
   );
 }
 
-function NameEntryView({ onJoin }: { onJoin: (name: string) => void }) {
-  const [name, setName] = useState("");
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = name.trim();
-    if (trimmed.length < 1) return;
-    onJoin(trimmed);
-  };
+function SignInView({
+  onJoin,
+  signingIn,
+  error,
+}: {
+  onJoin: () => void;
+  signingIn: boolean;
+  error: string;
+}) {
   return (
     <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-10 pb-6 overflow-hidden">
       {/* Top: festival logo + venue ribbon */}
@@ -161,41 +198,31 @@ function NameEntryView({ onJoin }: { onJoin: (name: string) => void }) {
         </div>
       </header>
 
-      {/* Bottom half: pitch + form */}
+      {/* Bottom half: pitch + Join (Google sign-in) */}
       <div className="flex-1 flex flex-col justify-end">
-        <form
-          onSubmit={submit}
-          className="w-full max-w-md sm:max-w-lg mx-auto text-center"
-        >
+        <div className="w-full max-w-md sm:max-w-lg mx-auto text-center">
           <p className="text-base sm:text-lg leading-snug tracking-[0.12em] uppercase font-semibold text-white/95">
             Vote on the reels playing on the big screen. Keep this tab open
             for the whole event.
           </p>
 
-          <div className="mt-8 space-y-4">
-            <GlowField>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="ENTER YOUR NAME..."
-                autoFocus
-                maxLength={40}
-                className="w-full bg-stone-100 text-black text-center px-6 py-4 rounded-full text-sm sm:text-base tracking-[0.25em] uppercase placeholder-stone-500 focus:outline-none"
-              />
-            </GlowField>
-
+          <div className="mt-8">
             <GlowField>
               <button
-                type="submit"
-                disabled={!name.trim()}
+                type="button"
+                onClick={onJoin}
+                disabled={signingIn}
                 className="w-full bg-black text-white border border-white/15 px-6 py-4 rounded-full text-sm sm:text-base tracking-[0.3em] uppercase font-semibold disabled:opacity-40 transition-transform active:scale-[0.99]"
               >
-                Join
+                {signingIn ? "Redirecting…" : "Join"}
               </button>
             </GlowField>
           </div>
-        </form>
+
+          {error && (
+            <p className="text-red-400 text-xs mt-4">{error}</p>
+          )}
+        </div>
 
         {/* Bottom: socials */}
         <div className="mt-10 flex items-center justify-center gap-5 text-white/85">
@@ -272,16 +299,6 @@ function XIcon() {
   );
 }
 
-function cryptoRandomUUID(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 function VotingView({
   voter,
