@@ -213,19 +213,9 @@ function FestivalHeader() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo.png"
-        alt="Indian Scroll Festival"
+        alt="Indian Scroll Festival · Bangalore International Centre · 16 May 2026"
         className="w-full max-w-[260px] sm:max-w-[320px] h-auto"
       />
-      <div
-        className="mt-1 text-[10px] sm:text-[11px] uppercase font-bold"
-        style={{
-          color: YELLOW,
-          letterSpacing: "0.28em",
-          fontFamily: "var(--font-condensed)",
-        }}
-      >
-        Bangalore International Centre · 16 May 2026
-      </div>
     </header>
   );
 }
