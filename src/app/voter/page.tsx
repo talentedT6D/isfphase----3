@@ -253,7 +253,16 @@ function FooterBar({
             <span className="opacity-50">·</span>
             <button
               onClick={onLogout}
-              className="hover:opacity-80 underline-offset-2 hover:underline"
+              className="uppercase hover:opacity-80 underline-offset-2 hover:underline"
+              style={{
+                font: "inherit",
+                color: "inherit",
+                letterSpacing: "inherit",
+                background: "transparent",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+              }}
             >
               Logout
             </button>
