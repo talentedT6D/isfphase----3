@@ -182,7 +182,7 @@ function HoldingSlate() {
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/Group%20120.png"
+        src="/logo.png"
         alt="ISF"
         className="h-32 w-auto"
       />

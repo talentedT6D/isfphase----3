@@ -50,7 +50,7 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/Group%20120.png"
+          src="/logo.png"
           alt="ISF"
           className="h-10 w-auto mb-4"
         />
@@ -243,7 +243,7 @@ function TopBar({
     <div className="flex items-center justify-between px-4 py-3 border-b border-stone-300 bg-white text-xs">
       <div className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Group%20120.png" alt="ISF" className="h-5 w-auto" />
+        <img src="/logo.png" alt="ISF" className="h-5 w-auto" />
         <span className="font-semibold tracking-wider">ADMIN</span>
         <Pill tone={playback.status === "playing" ? "live" : "muted"}>
           {playback.status === "playing"
