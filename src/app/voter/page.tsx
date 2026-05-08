@@ -7,7 +7,16 @@ import { useVotingSubscriber } from "@/lib/channels";
 import { findVoterReel } from "@/lib/reels";
 
 type Reaction = "LOL" | "FIRE" | "DEAD" | "KISS";
-const REACTIONS: Reaction[] = ["LOL", "FIRE", "DEAD", "KISS"];
+const REACTIONS: { key: Reaction; emoji: string }[] = [
+  { key: "LOL", emoji: "😂" },
+  { key: "FIRE", emoji: "🔥" },
+  { key: "DEAD", emoji: "💀" },
+  { key: "KISS", emoji: "💋" },
+];
+
+const YELLOW = "#F5F019";
+const HALO_BOX_SHADOW =
+  "0 0 0 1px rgba(255,170,90,0.65), 0 0 18px rgba(255,140,60,0.45), 0 0 48px rgba(255,120,40,0.22)";
 
 interface VoteRow {
   reel_id: string;
@@ -39,6 +48,7 @@ export default function VoterPage() {
   const [myVotes, setMyVotes] = useState<VoteRow[]>([]);
   const [signingIn, setSigningIn] = useState(false);
   const [signInError, setSignInError] = useState("");
+  const [skippedReels, setSkippedReels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +96,7 @@ export default function VoterPage() {
     () => myVotes.find((v) => v.reel_id === voting.reel_id),
     [myVotes, voting.reel_id],
   );
+  const skipped = !!voting.reel_id && skippedReels.has(voting.reel_id);
 
   if (!ready) return <FullBleed>Loading…</FullBleed>;
 
@@ -115,16 +126,25 @@ export default function VoterPage() {
     );
   }
 
-  const handleLeave = async () => {
+  const handleLogout = async () => {
     await supabase.auth.signOut();
     setVoter(null);
     setMyVotes([]);
+    setSkippedReels(new Set());
   };
 
   const onSubmitted = (row: VoteRow) => {
     setMyVotes((prev) => {
       if (prev.some((v) => v.reel_id === row.reel_id)) return prev;
       return [...prev, row];
+    });
+  };
+
+  const onSkip = (reelId: string) => {
+    setSkippedReels((prev) => {
+      const next = new Set(prev);
+      next.add(reelId);
+      return next;
     });
   };
 
@@ -140,6 +160,8 @@ export default function VoterPage() {
           totalVoted={myVotes.length}
         />
       );
+    } else if (skipped) {
+      body = <WaitingView totalVoted={myVotes.length} skipped />;
     } else {
       body = (
         <VotingView
@@ -147,8 +169,8 @@ export default function VoterPage() {
           reelId={currentReel.reel_id}
           reelTitle={currentReel.title}
           creator={currentReel.creator}
-          category={currentReel.category}
           onSubmitted={onSubmitted}
+          onSkip={() => onSkip(currentReel.reel_id)}
         />
       );
     }
@@ -157,23 +179,114 @@ export default function VoterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-white/10 text-xs">
-        <span className="font-mono text-white/60 truncate max-w-[60%]">
-          {voter.name}
-        </span>
-        <button
-          onClick={handleLeave}
-          className="text-white/60 hover:text-white"
-        >
-          Sign out
-        </button>
-      </header>
-      <main className="flex-1 flex flex-col">{body}</main>
+    <Shell voterName={voter.name} onLogout={handleLogout}>
+      {body}
+    </Shell>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Shared shell: festival logo + ribbon at the top, social ribbon + logout at
+// the bottom, content in the middle.
+// --------------------------------------------------------------------------
+function Shell({
+  voterName,
+  onLogout,
+  children,
+}: {
+  voterName?: string;
+  onLogout?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-6 pb-5 overflow-hidden font-[var(--font-display)]">
+      <FestivalHeader />
+      <div className="flex-1 flex flex-col">{children}</div>
+      <FooterBar voterName={voterName} onLogout={onLogout} />
     </div>
   );
 }
 
+function FestivalHeader() {
+  return (
+    <header className="flex flex-col items-center text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.png"
+        alt="Indian Scroll Festival"
+        className="w-full max-w-[260px] sm:max-w-[320px] h-auto"
+      />
+      <div
+        className="mt-1 text-[10px] sm:text-[11px] uppercase font-bold"
+        style={{
+          color: YELLOW,
+          letterSpacing: "0.28em",
+          fontFamily: "var(--font-condensed)",
+        }}
+      >
+        Bangalore International Centre · 16 May 2026
+      </div>
+    </header>
+  );
+}
+
+function FooterBar({
+  voterName,
+  onLogout,
+}: {
+  voterName?: string;
+  onLogout?: () => void;
+}) {
+  return (
+    <div
+      className="mt-6 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.25em]"
+      style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        {voterName && (
+          <span className="truncate max-w-[40vw]" title={voterName}>
+            {voterName}
+          </span>
+        )}
+        {onLogout && (
+          <>
+            <span className="opacity-50">·</span>
+            <button
+              onClick={onLogout}
+              className="hover:opacity-80 underline-offset-2 hover:underline"
+            >
+              Logout
+            </button>
+          </>
+        )}
+      </div>
+      <div className="flex items-center gap-3" style={{ color: YELLOW }}>
+        <a
+          href="https://instagram.com/indianscrollfestival"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Instagram"
+          className="hover:opacity-80"
+        >
+          <InstagramIcon />
+        </a>
+        <a
+          href="https://x.com/indianscroll"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="X"
+          className="hover:opacity-80"
+        >
+          <XIcon />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Sign-in screen
+// --------------------------------------------------------------------------
 function SignInView({
   onJoin,
   signingIn,
@@ -184,28 +297,7 @@ function SignInView({
   error: string;
 }) {
   return (
-    <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-6 pb-5 overflow-hidden font-[var(--font-display)]">
-      {/* Top: logo + yellow venue ribbon, hugging the top edge */}
-      <header className="flex flex-col items-center text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo.png"
-          alt="Indian Scroll Festival"
-          className="w-full max-w-[440px] sm:max-w-[520px] h-auto"
-        />
-        <div
-          className="mt-1 text-[11px] sm:text-xs uppercase font-bold"
-          style={{
-            color: "#F5F019",
-            letterSpacing: "0.28em",
-            fontFamily: "var(--font-condensed)",
-          }}
-        >
-          Bangalore International Centre · 16 May 2026
-        </div>
-      </header>
-
-      {/* Middle: pitch + JOIN, vertically centered in the leftover space */}
+    <Shell>
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="w-full max-w-md sm:max-w-lg text-center">
           <p
@@ -233,44 +325,347 @@ function SignInView({
           {error && <p className="text-red-400 text-xs mt-4">{error}</p>}
         </div>
       </div>
+    </Shell>
+  );
+}
 
-      {/* Bottom: yellow social icons */}
-      <div
-        className="flex items-center justify-center gap-4"
-        style={{ color: "#F5F019" }}
-      >
-        <a
-          href="https://instagram.com/indianscrollfestival"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Instagram"
-          className="hover:opacity-80"
+// --------------------------------------------------------------------------
+// Active voting screen — matches the festival mock.
+// --------------------------------------------------------------------------
+function VotingView({
+  voter,
+  reelId,
+  reelTitle,
+  creator,
+  onSubmitted,
+  onSkip,
+}: {
+  voter: Voter;
+  reelId: string;
+  reelTitle: string;
+  creator: string;
+  onSubmitted: (row: VoteRow) => void;
+  onSkip: () => void;
+}) {
+  const [score, setScore] = useState(50);
+  const [moved, setMoved] = useState(false);
+  const [reaction, setReaction] = useState<Reaction | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setScore(50);
+    setMoved(false);
+    setReaction(null);
+    setError("");
+  }, [reelId]);
+
+  const submit = async () => {
+    setSubmitting(true);
+    setError("");
+    const { error } = await supabase.from("votes").insert({
+      user_id: voter.id,
+      user_name: voter.name,
+      reel_id: reelId,
+      score,
+      reaction,
+    });
+    if (error) {
+      if (error.code === "23505") {
+        onSubmitted({ reel_id: reelId, score, reaction });
+      } else {
+        setError(error.message);
+        setSubmitting(false);
+        return;
+      }
+    } else {
+      onSubmitted({ reel_id: reelId, score, reaction });
+    }
+    setSubmitting(false);
+  };
+
+  const descriptor = scoreDescriptor(score);
+
+  return (
+    <div className="flex-1 flex flex-col">
+      {/* Title block, vertically anchored just above center */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div
+          className="text-[11px] sm:text-xs uppercase font-bold text-white/70"
+          style={{ letterSpacing: "0.4em" }}
         >
-          <InstagramIcon />
-        </a>
-        <a
-          href="https://x.com/indianscroll"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="X"
-          className="hover:opacity-80"
+          Now Voting
+        </div>
+        <h1
+          className="mt-3 text-4xl sm:text-5xl uppercase font-extrabold leading-none break-words max-w-full"
+          style={{ letterSpacing: "0.1em" }}
         >
-          <XIcon />
-        </a>
+          {reelTitle}
+        </h1>
+        <div
+          className="mt-3 text-base sm:text-lg uppercase font-bold text-white/85"
+          style={{ letterSpacing: "0.32em" }}
+        >
+          {creator}
+        </div>
+      </div>
+
+      {/* Score + slider */}
+      <div className="w-full max-w-xl mx-auto">
+        <div
+          className="text-5xl sm:text-6xl font-extrabold leading-none"
+          style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
+        >
+          {score}
+          <span className="text-white/40">/100</span>
+        </div>
+
+        <div className="mt-4 relative">
+          {/* tick labels above */}
+          <div
+            className="flex justify-between text-[10px] sm:text-xs uppercase font-bold mb-2"
+            style={{ color: YELLOW, letterSpacing: "0.18em" }}
+          >
+            <span>01</span>
+            <span>25</span>
+            <span>50</span>
+            <span>75</span>
+            <span>100</span>
+          </div>
+
+          <input
+            type="range"
+            min={1}
+            max={100}
+            step={1}
+            value={score}
+            onChange={(e) => {
+              setScore(Number(e.target.value));
+              setMoved(true);
+            }}
+            className="vote-slider"
+            style={
+              {
+                ["--p" as string]: `${score}%`,
+              } as React.CSSProperties
+            }
+          />
+
+          {/* descriptor underneath the thumb */}
+          <div
+            className="relative h-5 mt-1"
+            style={{ color: YELLOW }}
+          >
+            <span
+              className="absolute -translate-x-1/2 text-[10px] sm:text-xs uppercase font-bold"
+              style={{
+                left: `${score}%`,
+                letterSpacing: "0.25em",
+              }}
+            >
+              {descriptor}
+            </span>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 text-[10px] sm:text-xs uppercase font-bold ${
+            moved ? "text-white/40" : "text-white/85"
+          }`}
+          style={{ letterSpacing: "0.3em" }}
+        >
+          Drag the slider to vote
+        </div>
+
+        {/* Vibe section */}
+        <div className="mt-6">
+          <div
+            className="text-[10px] sm:text-xs uppercase italic"
+            style={{ color: YELLOW, letterSpacing: "0.2em" }}
+          >
+            Vibe (optional)
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-3">
+            {REACTIONS.map((r) => {
+              const active = reaction === r.key;
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => setReaction(active ? null : r.key)}
+                  className="aspect-square rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-transform active:scale-95"
+                  style={{
+                    backgroundColor: YELLOW,
+                    boxShadow: active
+                      ? `0 0 0 2px #fff, ${HALO_BOX_SHADOW}`
+                      : "0 0 0 1px rgba(255,170,90,0.45)",
+                    opacity: reaction && !active ? 0.55 : 1,
+                  }}
+                  aria-pressed={active}
+                  aria-label={r.key}
+                >
+                  <span aria-hidden="true">{r.emoji}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {error && (
+          <p className="text-red-400 text-xs mt-4 text-center">{error}</p>
+        )}
+
+        {/* Action buttons */}
+        <div className="mt-6 space-y-3">
+          <GlowField>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!moved || submitting}
+              className="w-full px-6 py-4 rounded-full text-base sm:text-lg uppercase font-extrabold transition-transform active:scale-[0.99] disabled:opacity-60"
+              style={{
+                backgroundColor: YELLOW,
+                color: "#D62A2A",
+                letterSpacing: "0.3em",
+              }}
+            >
+              {submitting ? "Submitting…" : "Submit Score"}
+            </button>
+          </GlowField>
+
+          <button
+            type="button"
+            onClick={onSkip}
+            className="w-full px-6 py-4 rounded-full text-base sm:text-lg uppercase font-bold bg-black transition-transform active:scale-[0.99]"
+            style={{
+              color: YELLOW,
+              border: `1px solid ${YELLOW}`,
+              letterSpacing: "0.3em",
+            }}
+          >
+            Skip Entry
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-// Pill-shaped wrapper that paints the warm orange halo seen in the mock.
+function scoreDescriptor(score: number): string {
+  if (score < 21) return "BAD";
+  if (score < 41) return "OKAY";
+  if (score < 61) return "GOOD";
+  if (score < 81) return "GREAT";
+  return "AMAZING";
+}
+
+// --------------------------------------------------------------------------
+// Locked view (already voted)
+// --------------------------------------------------------------------------
+function LockedView({
+  reelTitle,
+  creator,
+  score,
+  reaction,
+  totalVoted,
+}: {
+  reelTitle: string;
+  creator: string;
+  score: number;
+  reaction: Reaction | null;
+  totalVoted: number;
+}) {
+  const reactionEmoji = REACTIONS.find((r) => r.key === reaction)?.emoji;
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center text-center">
+      <div
+        className="text-[11px] sm:text-xs uppercase font-bold text-white/70"
+        style={{ letterSpacing: "0.4em" }}
+      >
+        Vote Locked In
+      </div>
+      <h2
+        className="mt-3 text-3xl sm:text-4xl uppercase font-extrabold leading-none"
+        style={{ letterSpacing: "0.08em" }}
+      >
+        {reelTitle}
+      </h2>
+      <div
+        className="mt-2 text-sm uppercase font-bold text-white/80"
+        style={{ letterSpacing: "0.3em" }}
+      >
+        {creator}
+      </div>
+      <div
+        className="mt-8 text-6xl sm:text-7xl font-extrabold leading-none"
+        style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
+      >
+        {score}
+        <span className="text-white/40">/100</span>
+      </div>
+      {reactionEmoji && (
+        <div className="mt-4 text-4xl" aria-label={reaction ?? undefined}>
+          {reactionEmoji}
+        </div>
+      )}
+      <p
+        className="mt-10 text-[11px] uppercase font-bold text-white/85"
+        style={{ letterSpacing: "0.3em" }}
+      >
+        Waiting for the next reel
+      </p>
+      <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-white/40">
+        You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}
+      </p>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Waiting view (no reel open or this reel skipped)
+// --------------------------------------------------------------------------
+function WaitingView({
+  totalVoted,
+  skipped,
+}: {
+  totalVoted: number;
+  skipped?: boolean;
+}) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center text-center">
+      <div
+        className="text-[11px] sm:text-xs uppercase font-bold"
+        style={{ color: YELLOW, letterSpacing: "0.4em" }}
+      >
+        {skipped ? "Entry Skipped" : "Stand By"}
+      </div>
+      <div
+        className="mt-2 w-2 h-2 rounded-full animate-pulse"
+        style={{ backgroundColor: YELLOW }}
+      />
+      <p
+        className="mt-8 text-base sm:text-lg uppercase font-bold text-white"
+        style={{ letterSpacing: "0.2em" }}
+      >
+        {skipped
+          ? "We'll bring you back when the next reel opens."
+          : "Voting will open when the next reel starts."}
+      </p>
+      <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/40">
+        You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}
+      </p>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Atoms
+// --------------------------------------------------------------------------
 function GlowField({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="rounded-full"
-      style={{
-        boxShadow:
-          "0 0 0 1px rgba(255,170,90,0.65), 0 0 18px rgba(255,140,60,0.45), 0 0 48px rgba(255,120,40,0.22)",
-      }}
+      style={{ boxShadow: HALO_BOX_SHADOW }}
     >
       {children}
     </div>
@@ -311,200 +706,10 @@ function XIcon() {
   );
 }
 
-
-function VotingView({
-  voter,
-  reelId,
-  reelTitle,
-  creator,
-  category,
-  onSubmitted,
-}: {
-  voter: Voter;
-  reelId: string;
-  reelTitle: string;
-  creator: string;
-  category: string;
-  onSubmitted: (row: VoteRow) => void;
-}) {
-  const [score, setScore] = useState(50);
-  const [moved, setMoved] = useState(false);
-  const [reaction, setReaction] = useState<Reaction | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    setScore(50);
-    setMoved(false);
-    setReaction(null);
-    setError("");
-  }, [reelId]);
-
-  const submit = async () => {
-    setSubmitting(true);
-    setError("");
-    const { error } = await supabase.from("votes").insert({
-      user_id: voter.id,
-      user_name: voter.name,
-      reel_id: reelId,
-      score,
-      reaction,
-    });
-    if (error) {
-      if (error.code === "23505") {
-        onSubmitted({ reel_id: reelId, score, reaction });
-      } else {
-        setError(error.message);
-        setSubmitting(false);
-        return;
-      }
-    } else {
-      onSubmitted({ reel_id: reelId, score, reaction });
-    }
-    setSubmitting(false);
-  };
-
-  return (
-    <div className="flex-1 flex flex-col px-6 py-8">
-      <div className="text-[10px] tracking-[0.3em] text-white/50">
-        NOW VOTING · {category.toUpperCase()}
-      </div>
-      <h2 className="text-2xl font-semibold mt-2 leading-tight">{reelTitle}</h2>
-      <p className="text-white/60 text-sm mt-1">by {creator}</p>
-
-      <div className="mt-12">
-        <div className="flex items-baseline justify-between">
-          <label className="text-xs uppercase tracking-wider text-white/50">
-            Your score
-          </label>
-          <span className="text-4xl font-semibold tabular-nums">
-            {score}
-            <span className="text-white/30 text-lg"> / 100</span>
-          </span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={1}
-          value={score}
-          onChange={(e) => {
-            setScore(Number(e.target.value));
-            setMoved(true);
-          }}
-          className="w-full mt-4 h-2 rounded-full appearance-none cursor-pointer"
-          style={{
-            background: `linear-gradient(to right, #fff 0%, #fff ${score}%, #333 ${score}%, #333 100%)`,
-          }}
-        />
-        <div className="flex justify-between text-[10px] text-white/40 mt-1">
-          <span>0</span>
-          <span>100</span>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <div className="text-xs uppercase tracking-wider text-white/50 mb-3">
-          Vibe <span className="text-white/30 normal-case">(optional)</span>
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {REACTIONS.map((r) => (
-            <button
-              key={r}
-              onClick={() => setReaction(reaction === r ? null : r)}
-              className={`py-3 rounded-lg border text-sm font-medium transition-colors ${
-                reaction === r
-                  ? "border-white bg-white text-black"
-                  : "border-white/20 text-white/80 hover:border-white/50"
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1" />
-
-      {error && (
-        <p className="text-red-400 text-xs mb-3 text-center">{error}</p>
-      )}
-      <button
-        onClick={submit}
-        disabled={!moved || submitting}
-        className="w-full py-4 rounded-lg bg-white text-black font-semibold disabled:bg-white/10 disabled:text-white/40"
-      >
-        {submitting
-          ? "Submitting…"
-          : moved
-            ? "Submit vote"
-            : "Move the slider to vote"}
-      </button>
-    </div>
-  );
-}
-
-function LockedView({
-  reelTitle,
-  creator,
-  score,
-  reaction,
-  totalVoted,
-}: {
-  reelTitle: string;
-  creator: string;
-  score: number;
-  reaction: Reaction | null;
-  totalVoted: number;
-}) {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <div className="text-[10px] tracking-[0.3em] text-white/50">
-        VOTE LOCKED IN
-      </div>
-      <h2 className="text-2xl font-semibold mt-2">{reelTitle}</h2>
-      <p className="text-white/60 text-sm">by {creator}</p>
-      <div className="text-5xl font-semibold mt-8 tabular-nums">
-        {score}
-        <span className="text-white/30 text-xl"> / 100</span>
-      </div>
-      {reaction && (
-        <div className="mt-3 text-white/70 text-sm tracking-wider">
-          · {reaction} ·
-        </div>
-      )}
-      <p className="text-white/50 text-sm mt-10">Waiting for the next reel.</p>
-      <p className="text-white/30 text-xs mt-2">
-        You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}.
-        Keep this tab open.
-      </p>
-    </div>
-  );
-}
-
-function WaitingView({ totalVoted }: { totalVoted: number }) {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <div className="text-[10px] tracking-[0.3em] text-white/50">
-        WAITING FOR NEXT REEL
-      </div>
-      <div className="mt-6 w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-      <p className="text-white/60 text-sm mt-10">
-        Voting will open when the next reel starts.
-      </p>
-      <p className="text-white/30 text-xs mt-2">
-        You&apos;ve voted on {totalVoted} reel
-        {totalVoted === 1 ? "" : "s"} so far. Keep this tab open.
-      </p>
-    </div>
-  );
-}
-
 function FullBleed({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-black text-white/60 flex items-center justify-center text-sm">
+    <div className="min-h-screen bg-black text-white/60 flex items-center justify-center text-sm font-[var(--font-display)]">
       {children}
     </div>
   );
 }
-
