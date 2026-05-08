@@ -413,8 +413,13 @@ function VotingView({
       {/* Score + slider */}
       <div className="w-full max-w-xl mx-auto">
         <div
-          className="text-5xl sm:text-6xl font-extrabold leading-none"
-          style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
+          className="text-5xl sm:text-6xl leading-none"
+          style={{
+            color: YELLOW,
+            fontFamily: "var(--font-extended)",
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+          }}
         >
           {score}
           <span className="text-white/40">/100</span>
@@ -597,8 +602,13 @@ function LockedView({
         {creator}
       </div>
       <div
-        className="mt-8 text-6xl sm:text-7xl font-extrabold leading-none"
-        style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
+        className="mt-8 text-6xl sm:text-7xl leading-none"
+        style={{
+          color: YELLOW,
+          fontFamily: "var(--font-extended)",
+          fontWeight: 600,
+          letterSpacing: "0.02em",
+        }}
       >
         {score}
         <span className="text-white/40">/100</span>

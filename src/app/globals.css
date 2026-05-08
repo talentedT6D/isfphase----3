@@ -7,6 +7,8 @@
   --font-display: "obviously", "obviously-narrow", system-ui, sans-serif;
   --font-condensed: "obviously-compressed", "obviously-condensed",
     "obviously-narrow", system-ui, sans-serif;
+  --font-extended: "obviously-extended", "obviously-wide", "obviously",
+    system-ui, sans-serif;
 }
 
 @theme inline {
@@ -15,6 +17,7 @@
   --font-sans: var(--font-display);
   --font-display: var(--font-display);
   --font-condensed: var(--font-condensed);
+  --font-extended: var(--font-extended);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
