@@ -192,7 +192,16 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-6 pb-5 overflow-hidden font-[var(--font-display)]">
+    <div
+      className="relative bg-black text-white flex flex-col overflow-hidden font-[var(--font-display)]"
+      style={{
+        minHeight: "100dvh",
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+        paddingLeft: "max(1rem, env(safe-area-inset-left))",
+        paddingRight: "max(1rem, env(safe-area-inset-right))",
+      }}
+    >
       {onLogout && <CornerLogout onLogout={onLogout} />}
       <FestivalHeader />
       <div className="flex-1 flex flex-col">{children}</div>
@@ -206,14 +215,17 @@ function CornerLogout({ onLogout }: { onLogout: () => void }) {
     <button
       type="button"
       onClick={onLogout}
-      className="absolute top-4 right-4 z-20 uppercase transition-opacity hover:opacity-90 active:scale-95"
+      className="absolute z-20 uppercase transition-opacity hover:opacity-90 active:scale-95"
       style={{
+        top: "max(0.75rem, env(safe-area-inset-top))",
+        right: "max(0.75rem, env(safe-area-inset-right))",
         fontFamily: "var(--font-display)",
         color: "#FFFFFF",
         backgroundColor: "#000",
-        padding: "8px 20px",
+        padding: "7px 16px",
+        minHeight: 36,
         borderRadius: 9999,
-        fontSize: "13px",
+        fontSize: "12px",
         fontWeight: 500,
         letterSpacing: "0.22em",
         border: 0,
@@ -300,7 +312,7 @@ function SignInView({
                 type="button"
                 onClick={onJoin}
                 disabled={signingIn}
-                className="w-full bg-black text-white px-5 py-3 rounded-full text-sm sm:text-base uppercase font-bold disabled:opacity-50 transition-transform active:scale-[0.99]"
+                className="w-full min-h-[48px] bg-black text-white px-5 py-3 rounded-full text-sm sm:text-base uppercase font-bold disabled:opacity-50 transition-transform active:scale-[0.99]"
                 style={{ letterSpacing: "0.35em" }}
               >
                 {signingIn ? "Redirecting…" : "Join"}
@@ -487,7 +499,7 @@ function VotingView({
                   key={r.key}
                   type="button"
                   onClick={() => setReaction(active ? null : r.key)}
-                  className="aspect-square rounded-xl flex items-center justify-center text-2xl sm:text-3xl transition-transform active:scale-95"
+                  className="aspect-square min-h-[56px] rounded-xl flex items-center justify-center text-2xl sm:text-3xl transition-transform active:scale-95"
                   style={{
                     backgroundColor: YELLOW,
                     boxShadow: active
@@ -516,7 +528,7 @@ function VotingView({
               type="button"
               onClick={submit}
               disabled={!moved || submitting}
-              className="w-full px-5 py-3 rounded-full text-sm sm:text-base uppercase italic transition-transform active:scale-[0.99] disabled:opacity-60"
+              className="w-full min-h-[48px] px-5 py-3 rounded-full text-sm sm:text-base uppercase italic transition-transform active:scale-[0.99] disabled:opacity-60"
               style={{
                 backgroundColor: YELLOW,
                 color: "#D62A2A",
@@ -532,7 +544,7 @@ function VotingView({
           <button
             type="button"
             onClick={onSkip}
-            className="w-full px-5 py-3 rounded-full text-sm sm:text-base uppercase italic bg-black transition-transform active:scale-[0.99]"
+            className="w-full min-h-[48px] px-5 py-3 rounded-full text-sm sm:text-base uppercase italic bg-black transition-transform active:scale-[0.99]"
             style={{
               color: YELLOW,
               border: `1px solid ${YELLOW}`,

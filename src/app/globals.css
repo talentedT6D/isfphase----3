@@ -32,6 +32,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-display);
+  /* Stop iOS Safari from auto-resizing typography in landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* No long-press menus / accidental text selection on the voter UI. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Voting slider — yellow-on-black, with the fill controlled by --p (a 0-100% string). */
@@ -71,4 +76,19 @@ body {
   border: 2px solid #f5f019;
   box-shadow: 0 0 8px rgba(245, 240, 25, 0.6);
   cursor: pointer;
+}
+
+/* Bigger thumb on touch devices so it's an actual 44px tap target. */
+@media (pointer: coarse) {
+  .vote-slider {
+    height: 4px;
+  }
+  .vote-slider::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  .vote-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
 }
