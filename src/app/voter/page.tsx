@@ -239,12 +239,25 @@ function FooterBar({
 }) {
   return (
     <div
-      className="mt-6 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.25em] font-bold"
-      style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
+      className="mt-6 flex items-center justify-between gap-4"
+      style={{ fontFamily: "var(--font-condensed)" }}
     >
       <div className="flex items-center gap-3 min-w-0">
         {voterName && (
-          <span className="truncate max-w-[40vw]" title={voterName}>
+          <span
+            className="truncate max-w-[45vw] font-bold"
+            title={voterName}
+            style={{
+              color: "#FFFFFF",
+              backgroundColor: "rgba(245, 240, 25, 0.12)",
+              border: `1px solid ${YELLOW}`,
+              padding: "5px 12px",
+              borderRadius: 9999,
+              fontSize: "12px",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+            }}
+          >
             {voterName}
           </span>
         )}
@@ -256,10 +269,10 @@ function FooterBar({
               fontFamily: "var(--font-condensed)",
               color: "#000",
               backgroundColor: YELLOW,
-              padding: "4px 10px",
+              padding: "5px 12px",
               borderRadius: 9999,
-              fontSize: "10px",
-              letterSpacing: "0.25em",
+              fontSize: "12px",
+              letterSpacing: "0.22em",
               border: 0,
               cursor: "pointer",
             }}
