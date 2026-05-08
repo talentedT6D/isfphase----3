@@ -243,7 +243,7 @@ function CornerLogout({ onLogout }: { onLogout: () => void }) {
 
 function FestivalHeader() {
   return (
-    <header className="flex flex-col items-center text-center">
+    <header className="flex flex-col items-start">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo.png"
