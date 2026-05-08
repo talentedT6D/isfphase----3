@@ -184,81 +184,92 @@ function SignInView({
   error: string;
 }) {
   return (
-    <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-10 pb-6 overflow-hidden">
-      {/* Top: festival logo + venue ribbon */}
+    <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-6 pb-5 overflow-hidden font-[var(--font-display)]">
+      {/* Top: logo + yellow venue ribbon, hugging the top edge */}
       <header className="flex flex-col items-center text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo.png"
           alt="Indian Scroll Festival"
-          className="w-full max-w-[420px] sm:max-w-[480px] h-auto"
+          className="w-full max-w-[440px] sm:max-w-[520px] h-auto"
         />
-        <div className="mt-3 text-[11px] sm:text-xs tracking-[0.32em] uppercase text-yellow-300 font-[var(--font-condensed)]">
+        <div
+          className="mt-1 text-[11px] sm:text-xs uppercase font-bold"
+          style={{
+            color: "#F5F019",
+            letterSpacing: "0.28em",
+            fontFamily: "var(--font-condensed)",
+          }}
+        >
           Bangalore International Centre · 16 May 2026
         </div>
       </header>
 
-      {/* Bottom half: pitch + Join (Google sign-in) */}
-      <div className="flex-1 flex flex-col justify-end">
-        <div className="w-full max-w-md sm:max-w-lg mx-auto text-center">
-          <p className="text-base sm:text-lg leading-snug tracking-[0.12em] uppercase font-semibold text-white/95">
+      {/* Middle: pitch + JOIN, vertically centered in the leftover space */}
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="w-full max-w-md sm:max-w-lg text-center">
+          <p
+            className="text-base sm:text-lg leading-[1.35] uppercase font-bold text-white"
+            style={{ letterSpacing: "0.13em" }}
+          >
             Vote on the reels playing on the big screen. Keep this tab open
             for the whole event.
           </p>
 
-          <div className="mt-8">
+          <div className="mt-7">
             <GlowField>
               <button
                 type="button"
                 onClick={onJoin}
                 disabled={signingIn}
-                className="w-full flex items-center justify-center gap-3 bg-black text-white border border-white/15 px-6 py-4 rounded-full text-sm sm:text-base tracking-[0.25em] uppercase font-semibold disabled:opacity-40 transition-transform active:scale-[0.99]"
+                className="w-full bg-black text-white px-6 py-4 rounded-full text-base sm:text-lg uppercase font-bold disabled:opacity-50 transition-transform active:scale-[0.99]"
+                style={{ letterSpacing: "0.4em" }}
               >
-                <GoogleMark />
-                <span>{signingIn ? "Redirecting…" : "Sign in with Google"}</span>
+                {signingIn ? "Redirecting…" : "Join"}
               </button>
             </GlowField>
           </div>
 
-          {error && (
-            <p className="text-red-400 text-xs mt-4">{error}</p>
-          )}
+          {error && <p className="text-red-400 text-xs mt-4">{error}</p>}
         </div>
+      </div>
 
-        {/* Bottom: socials */}
-        <div className="mt-10 flex items-center justify-center gap-5 text-white/85">
-          <a
-            href="https://instagram.com/indianscrollfestival"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Instagram"
-            className="hover:opacity-70"
-          >
-            <InstagramIcon />
-          </a>
-          <a
-            href="https://x.com/indianscroll"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="X"
-            className="hover:opacity-70"
-          >
-            <XIcon />
-          </a>
-        </div>
+      {/* Bottom: yellow social icons */}
+      <div
+        className="flex items-center justify-center gap-4"
+        style={{ color: "#F5F019" }}
+      >
+        <a
+          href="https://instagram.com/indianscrollfestival"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Instagram"
+          className="hover:opacity-80"
+        >
+          <InstagramIcon />
+        </a>
+        <a
+          href="https://x.com/indianscroll"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="X"
+          className="hover:opacity-80"
+        >
+          <XIcon />
+        </a>
       </div>
     </div>
   );
 }
 
-// Pill-shaped wrapper that paints the warm yellow halo seen in the mock.
+// Pill-shaped wrapper that paints the warm orange halo seen in the mock.
 function GlowField({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="rounded-full"
       style={{
         boxShadow:
-          "0 0 0 1px rgba(255,214,120,0.55), 0 0 22px rgba(255,180,80,0.32), 0 0 55px rgba(255,180,80,0.16)",
+          "0 0 0 1px rgba(255,170,90,0.65), 0 0 18px rgba(255,140,60,0.45), 0 0 48px rgba(255,120,40,0.22)",
       }}
     >
       {children}
@@ -269,8 +280,8 @@ function GlowField({ children }: { children: React.ReactNode }) {
 function InstagramIcon() {
   return (
     <svg
-      width="22"
-      height="22"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -286,34 +297,11 @@ function InstagramIcon() {
   );
 }
 
-function GoogleMark() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-      <path
-        fill="#EA4335"
-        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-      />
-      <path
-        fill="#4285F4"
-        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-      />
-      <path
-        fill="#34A853"
-        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-      />
-    </svg>
-  );
-}
-
 function XIcon() {
   return (
     <svg
-      width="20"
-      height="20"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
