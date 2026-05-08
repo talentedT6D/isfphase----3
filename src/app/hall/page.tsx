@@ -21,7 +21,10 @@ export default function HallPage() {
   }, [state.timestamp]);
 
   if (!sessionStarted) return <PreShow />;
-  if (state.status === "stopped") return <HoldingSlate />;
+  // Once admin has cued a reel we keep the video on screen for every state —
+  // playing, paused, or stopped. The holding slate only ever shows in the
+  // very-initial pre-show / no-reel-yet case (handled by LiveStage when
+  // state.reel_id is null).
   return <LiveStage state={state} />;
 }
 

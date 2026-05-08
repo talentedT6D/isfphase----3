@@ -178,9 +178,12 @@ function Panel() {
   };
 
   const onStop = () => {
+    // "Stop" = pause-and-rewind: keep the reel on screen frozen on frame 0
+    // instead of bouncing the hall to the holding slate.
+    if (!playbackReel) return;
     sendPlayback({
-      reel_id: null,
-      status: "stopped",
+      reel_id: playbackReel.reel_id,
+      status: "paused",
       timestamp: Date.now(),
       position: 0,
     });
