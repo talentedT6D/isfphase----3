@@ -186,8 +186,14 @@ function SignInView({
 }) {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/Group%20120.png"
+        alt="ISF"
+        className="h-16 w-auto mb-6"
+      />
       <div className="text-[10px] tracking-[0.3em] text-white/50 mb-3">
-        ISF 2026 · BENGALURU
+        BENGALURU · 2026
       </div>
       <h1 className="text-3xl font-semibold mb-2">Sign in to vote</h1>
       <p className="text-white/60 text-sm max-w-xs mb-8">

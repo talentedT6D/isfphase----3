@@ -180,12 +180,14 @@ function LiveStage({ state }: { state: PlaybackState }) {
 function HoldingSlate() {
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
-      <div className="text-[10px] tracking-[0.4em] text-white/50">
-        INDIAN SCROLL FESTIVAL · 2026
-      </div>
-      <div className="mt-6 text-5xl font-semibold tracking-tight">ISF</div>
-      <div className="mt-2 text-white/40 text-sm">
-        Bangalore International Centre · 16 May 2026
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/Group%20120.png"
+        alt="ISF"
+        className="h-32 w-auto"
+      />
+      <div className="mt-6 text-white/50 text-sm tracking-[0.3em]">
+        BANGALORE INTERNATIONAL CENTRE · 16 MAY 2026
       </div>
     </div>
   );

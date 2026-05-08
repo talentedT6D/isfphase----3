@@ -48,8 +48,14 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
         onSubmit={submit}
         className="w-full max-w-sm bg-white border border-stone-300 p-6"
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/Group%20120.png"
+          alt="ISF"
+          className="h-10 w-auto mb-4"
+        />
         <div className="text-[10px] tracking-[0.3em] text-stone-500 mb-2">
-          ISF 2026 · ADMIN
+          ADMIN
         </div>
         <h1 className="text-lg font-semibold text-stone-900 mb-4">Unlock</h1>
         <input
@@ -236,7 +242,9 @@ function TopBar({
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-stone-300 bg-white text-xs">
       <div className="flex items-center gap-3">
-        <span className="font-semibold tracking-wider">ISF · ADMIN</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/Group%20120.png" alt="ISF" className="h-5 w-auto" />
+        <span className="font-semibold tracking-wider">ADMIN</span>
         <Pill tone={playback.status === "playing" ? "live" : "muted"}>
           {playback.status === "playing"
             ? "On stage"
