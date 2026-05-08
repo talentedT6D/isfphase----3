@@ -48,6 +48,13 @@ function PreShow() {
 function LiveStage({ state }: { state: PlaybackState }) {
   const reel = findReel(state.reel_id);
   const isPlaying = state.status === "playing";
+  // Where admin says we should be in the reel right now. We compute this on
+  // every render because admin sends `position` at the broadcast moment;
+  // while playing, the actual current time has moved on.
+  const desiredPosition =
+    state.status === "playing"
+      ? state.position + (Date.now() - state.timestamp) / 1000
+      : state.position;
 
   const aRef = useRef<HTMLVideoElement>(null);
   const bRef = useRef<HTMLVideoElement>(null);
@@ -86,6 +93,11 @@ function LiveStage({ state }: { state: PlaybackState }) {
     const inactiveVideo = inactive === "A" ? aVideo : bVideo;
 
     if (slotReel.current[active] === target) {
+      // Same reel — re-seek if admin's broadcast position drifted >1s from
+      // what we're showing (i.e. an explicit scrub, or a state replay).
+      if (Math.abs(activeVideo.currentTime - desiredPosition) > 1) {
+        activeVideo.currentTime = Math.max(0, desiredPosition);
+      }
       if (isPlaying) activeVideo.play().catch(() => {});
       else activeVideo.pause();
       return;
@@ -96,6 +108,9 @@ function LiveStage({ state }: { state: PlaybackState }) {
       activeVideo.load();
       slotReel.current[active] = target;
       const start = () => {
+        if (desiredPosition > 0) {
+          activeVideo.currentTime = desiredPosition;
+        }
         if (isPlaying) activeVideo.play().catch(() => {});
       };
       if (activeVideo.readyState >= 3) {
@@ -113,6 +128,9 @@ function LiveStage({ state }: { state: PlaybackState }) {
     }
 
     const swap = () => {
+      if (desiredPosition > 0) {
+        inactiveVideo.currentTime = desiredPosition;
+      }
       if (isPlaying) inactiveVideo.play().catch(() => {});
 
       // Snap the incoming slot to the off-screen-below position with no
@@ -139,7 +157,9 @@ function LiveStage({ state }: { state: PlaybackState }) {
     }
     inactiveVideo.addEventListener("canplay", swap, { once: true });
     return () => inactiveVideo.removeEventListener("canplay", swap);
-  }, [reel, isPlaying, active]);
+    // desiredPosition is intentionally derived from state, so we depend on
+    // state.position + state.timestamp instead of recomputing every render.
+  }, [reel, isPlaying, active, state.position, state.timestamp]);
 
   // Preload the next reel into whichever slot is currently inactive so the
   // upcoming swap is instant.

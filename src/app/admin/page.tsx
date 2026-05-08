@@ -117,6 +117,21 @@ function Panel() {
     );
   }, [query]);
 
+  // Locally-tracked estimate of where the hall video is right now, in seconds.
+  // Drives the seek bar without needing the hall to report back.
+  const [estimated, setEstimated] = useState(playback.position);
+  useEffect(() => {
+    setEstimated(playback.position);
+    if (playback.status !== "playing" || !playbackReel) return;
+    const id = window.setInterval(() => {
+      const elapsed = (Date.now() - playback.timestamp) / 1000;
+      setEstimated(
+        Math.min(playback.position + elapsed, playbackReel.runtime),
+      );
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [playback, playbackReel]);
+
   // One-shot action: cue a reel, start it on the hall screen, and open voting.
   const playReel = (idx: number) => {
     const reel = REELS[idx];
@@ -125,6 +140,7 @@ function Panel() {
       reel_id: reel.reel_id,
       status: "playing",
       timestamp: Date.now(),
+      position: 0,
     });
     sendVoting({
       reel_id: reel.reel_id,
@@ -143,6 +159,7 @@ function Panel() {
       reel_id: playbackReel.reel_id,
       status: playback.status === "playing" ? "paused" : "playing",
       timestamp: Date.now(),
+      position: estimated,
     });
   };
 
@@ -161,11 +178,32 @@ function Panel() {
   };
 
   const onStop = () => {
-    sendPlayback({ reel_id: null, status: "stopped", timestamp: Date.now() });
+    sendPlayback({
+      reel_id: null,
+      status: "stopped",
+      timestamp: Date.now(),
+      position: 0,
+    });
     if (voting.status === "open") {
       sendVoting({ ...voting, status: "closed", closed_at: Date.now() });
     }
   };
+
+  const onSeek = (newPosition: number) => {
+    if (!playbackReel) return;
+    const clamped = Math.max(
+      0,
+      Math.min(newPosition, playbackReel.runtime),
+    );
+    sendPlayback({
+      reel_id: playbackReel.reel_id,
+      status: playback.status === "stopped" ? "playing" : playback.status,
+      timestamp: Date.now(),
+      position: clamped,
+    });
+  };
+
+  const onSkip = (delta: number) => onSeek(estimated + delta);
 
   const toggleVoting = () => {
     if (!playbackReel) return;
@@ -205,10 +243,13 @@ function Panel() {
         next={nextReel}
         playback={playback}
         voting={voting}
+        estimated={estimated}
         onPlayPause={onPlayPause}
         onPrev={onPrev}
         onNext={onNext}
         onStop={onStop}
+        onSeek={onSeek}
+        onSkip={onSkip}
         onToggleVoting={toggleVoting}
         onReopenPrevVoting={reopenPrevVoting}
         canReopenPrev={canReopenPrev}
@@ -302,10 +343,13 @@ function NowShowing({
   next,
   playback,
   voting,
+  estimated,
   onPlayPause,
   onPrev,
   onNext,
   onStop,
+  onSeek,
+  onSkip,
   onToggleVoting,
   onReopenPrevVoting,
   canReopenPrev,
@@ -314,10 +358,13 @@ function NowShowing({
   next: ReturnType<typeof findReel>;
   playback: PlaybackState;
   voting: VotingState;
+  estimated: number;
   onPlayPause: () => void;
   onPrev: () => void;
   onNext: () => void;
   onStop: () => void;
+  onSeek: (seconds: number) => void;
+  onSkip: (deltaSeconds: number) => void;
   onToggleVoting: () => void;
   onReopenPrevVoting: () => void;
   canReopenPrev: boolean;
@@ -326,6 +373,11 @@ function NowShowing({
   const votingOpen =
     voting.status === "open" && voting.reel_id === reel?.reel_id;
   const stats = useVoteStats(votingOpen ? voting.reel_id : null);
+
+  // Local scrub: while the operator is dragging, show the draft instead of
+  // the live estimate so the thumb doesn't fight their finger.
+  const [scrubDraft, setScrubDraft] = useState<number | null>(null);
+  const sliderValue = scrubDraft ?? estimated;
 
   return (
     <section className="p-5 bg-white border-b border-stone-300">
@@ -357,6 +409,60 @@ function NowShowing({
             </div>
           )}
         </div>
+
+        {reel && (
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-xs tabular-nums text-stone-600 w-12 text-right">
+              {formatClock(sliderValue)}
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={reel.runtime}
+              step={1}
+              value={Math.min(sliderValue, reel.runtime)}
+              onChange={(e) => setScrubDraft(Number(e.target.value))}
+              onMouseUp={() => {
+                if (scrubDraft !== null) {
+                  onSeek(scrubDraft);
+                  setScrubDraft(null);
+                }
+              }}
+              onTouchEnd={() => {
+                if (scrubDraft !== null) {
+                  onSeek(scrubDraft);
+                  setScrubDraft(null);
+                }
+              }}
+              onKeyUp={() => {
+                if (scrubDraft !== null) {
+                  onSeek(scrubDraft);
+                  setScrubDraft(null);
+                }
+              }}
+              className="flex-1 accent-stone-900 cursor-pointer"
+            />
+            <span className="text-xs tabular-nums text-stone-600 w-12">
+              {formatClock(reel.runtime)}
+            </span>
+            <button
+              type="button"
+              onClick={() => onSkip(-10)}
+              className="text-[11px] px-2 py-1 border border-stone-300 bg-white hover:bg-stone-100"
+              title="Back 10 seconds"
+            >
+              −10s
+            </button>
+            <button
+              type="button"
+              onClick={() => onSkip(10)}
+              className="text-[11px] px-2 py-1 border border-stone-300 bg-white hover:bg-stone-100"
+              title="Forward 10 seconds"
+            >
+              +10s
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2 mt-4 justify-center">
           <BigBtn
@@ -424,6 +530,13 @@ function NowShowing({
       </div>
     </section>
   );
+}
+
+function formatClock(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function BigBtn({

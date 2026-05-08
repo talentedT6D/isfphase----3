@@ -15,6 +15,7 @@ export interface PlaybackState {
   reel_id: string | null;
   status: PlaybackStatus;
   timestamp: number; // ms since epoch at broadcast
+  position: number; // seconds into the reel at the time of broadcast
 }
 
 export type VotingStatus = "open" | "closed" | "idle";
@@ -38,6 +39,7 @@ export const INITIAL_PLAYBACK: PlaybackState = {
   reel_id: null,
   status: "stopped",
   timestamp: 0,
+  position: 0,
 };
 
 export const INITIAL_VOTING: VotingState = {
