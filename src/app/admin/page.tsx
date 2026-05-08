@@ -374,11 +374,6 @@ function NowShowing({
     voting.status === "open" && voting.reel_id === reel?.reel_id;
   const stats = useVoteStats(votingOpen ? voting.reel_id : null);
 
-  // Local scrub: while the operator is dragging, show the draft instead of
-  // the live estimate so the thumb doesn't fight their finger.
-  const [scrubDraft, setScrubDraft] = useState<number | null>(null);
-  const sliderValue = scrubDraft ?? estimated;
-
   return (
     <section className="p-5 bg-white border-b border-stone-300">
       <div className="max-w-3xl mx-auto">
@@ -410,60 +405,6 @@ function NowShowing({
           )}
         </div>
 
-        {reel && (
-          <div className="mt-4 flex items-center gap-3">
-            <span className="text-xs tabular-nums text-stone-600 w-12 text-right">
-              {formatClock(sliderValue)}
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={reel.runtime}
-              step={1}
-              value={Math.min(sliderValue, reel.runtime)}
-              onChange={(e) => setScrubDraft(Number(e.target.value))}
-              onMouseUp={() => {
-                if (scrubDraft !== null) {
-                  onSeek(scrubDraft);
-                  setScrubDraft(null);
-                }
-              }}
-              onTouchEnd={() => {
-                if (scrubDraft !== null) {
-                  onSeek(scrubDraft);
-                  setScrubDraft(null);
-                }
-              }}
-              onKeyUp={() => {
-                if (scrubDraft !== null) {
-                  onSeek(scrubDraft);
-                  setScrubDraft(null);
-                }
-              }}
-              className="flex-1 accent-stone-900 cursor-pointer"
-            />
-            <span className="text-xs tabular-nums text-stone-600 w-12">
-              {formatClock(reel.runtime)}
-            </span>
-            <button
-              type="button"
-              onClick={() => onSkip(-10)}
-              className="text-[11px] px-2 py-1 border border-stone-300 bg-white hover:bg-stone-100"
-              title="Back 10 seconds"
-            >
-              −10s
-            </button>
-            <button
-              type="button"
-              onClick={() => onSkip(10)}
-              className="text-[11px] px-2 py-1 border border-stone-300 bg-white hover:bg-stone-100"
-              title="Forward 10 seconds"
-            >
-              +10s
-            </button>
-          </div>
-        )}
-
         <div className="flex flex-wrap gap-2 mt-4 justify-center">
           <BigBtn
             onClick={onPrev}
@@ -471,8 +412,14 @@ function NowShowing({
           >
             ⏮ Prev
           </BigBtn>
+          <BigBtn onClick={() => onSkip(-10)} disabled={!reel}>
+            −10s
+          </BigBtn>
           <BigBtn onClick={onPlayPause} primary>
             {playing ? "⏸ Pause" : "▶ Play"}
+          </BigBtn>
+          <BigBtn onClick={() => onSkip(10)} disabled={!reel}>
+            +10s
           </BigBtn>
           <BigBtn
             onClick={onNext}
@@ -530,13 +477,6 @@ function NowShowing({
       </div>
     </section>
   );
-}
-
-function formatClock(seconds: number): string {
-  const total = Math.max(0, Math.round(seconds));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function BigBtn({
