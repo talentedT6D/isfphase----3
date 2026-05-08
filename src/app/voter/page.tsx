@@ -152,13 +152,7 @@ export default function VoterPage() {
   if (voting.status === "open" && currentReel) {
     if (alreadyVoted && myVoteForCurrent) {
       body = (
-        <LockedView
-          reelTitle={currentReel.title}
-          creator={currentReel.creator}
-          score={myVoteForCurrent.score}
-          reaction={myVoteForCurrent.reaction}
-          totalVoted={myVotes.length}
-        />
+        <LockedView totalVoted={myVotes.length} />
       );
     } else if (skipped) {
       body = <WaitingView totalVoted={myVotes.length} skipped />;
@@ -560,75 +554,53 @@ function scoreDescriptor(score: number): string {
 }
 
 // --------------------------------------------------------------------------
-// Locked view (already voted)
+// Locked view — shown right after a vote is submitted, until the admin
+// opens voting on the next reel.
 // --------------------------------------------------------------------------
-function LockedView({
-  reelTitle,
-  creator,
-  score,
-  reaction,
-  totalVoted,
-}: {
-  reelTitle: string;
-  creator: string;
-  score: number;
-  reaction: Reaction | null;
-  totalVoted: number;
-}) {
-  const reactionEmoji = REACTIONS.find((r) => r.key === reaction)?.emoji;
+function LockedView({ totalVoted }: { totalVoted: number }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center">
+    <div className="flex-1 flex flex-col items-center justify-center text-center gap-10 sm:gap-14 py-8">
       <div
-        className="text-[10px] sm:text-xs uppercase font-bold text-white/70"
-        style={{ letterSpacing: "0.4em" }}
+        className="text-sm sm:text-base uppercase font-bold text-white"
+        style={{ letterSpacing: "0.22em" }}
       >
-        Vote Locked In
+        Waiting for next reel
       </div>
-      <h2
-        className="mt-2 text-2xl sm:text-3xl uppercase leading-none"
-        style={{
-          letterSpacing: "0.08em",
-          fontFamily: "var(--font-extended)",
-          fontWeight: 700,
-        }}
-      >
-        {reelTitle}
-      </h2>
-      <div
-        className="mt-2 text-xs sm:text-sm uppercase font-bold text-white/80"
-        style={{ letterSpacing: "0.3em" }}
-      >
-        {creator}
+
+      <YellowSpinner />
+
+      <div>
+        <p
+          className="text-sm sm:text-base uppercase font-bold text-white"
+          style={{ letterSpacing: "0.16em" }}
+        >
+          Voting will open when the next reel plays
+        </p>
+        <p
+          className="mt-2 text-[10px] sm:text-xs uppercase font-bold text-white/55"
+          style={{ letterSpacing: "0.22em" }}
+        >
+          You&apos;ve voted on {totalVoted} reel
+          {totalVoted === 1 ? "" : "s"} so far · Keep this tab open
+        </p>
       </div>
-      <div
-        className="mt-6 text-[3rem] sm:text-6xl leading-none"
-        style={{
-          color: YELLOW,
-          fontFamily: "var(--font-extended)",
-          fontWeight: 700,
-          letterSpacing: "0.02em",
-          textShadow:
-            "0 0 10px rgba(245, 240, 25, 0.5), 0 0 26px rgba(245, 240, 25, 0.22)",
-        }}
-      >
-        {score}
-        <span className="text-white/40">/100</span>
-      </div>
-      {reactionEmoji && (
-        <div className="mt-3 text-3xl" aria-label={reaction ?? undefined}>
-          {reactionEmoji}
-        </div>
-      )}
-      <p
-        className="mt-8 text-[10px] sm:text-xs uppercase font-bold text-white/85"
-        style={{ letterSpacing: "0.3em" }}
-      >
-        Waiting for the next reel
-      </p>
-      <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-white/40">
-        You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}
-      </p>
     </div>
+  );
+}
+
+// Yellow rotating arc — used as the "between-reels" loading indicator.
+function YellowSpinner() {
+  return (
+    <div
+      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full animate-spin"
+      style={{
+        border: "3px solid rgba(245, 240, 25, 0.18)",
+        borderTopColor: YELLOW,
+        boxShadow: "0 0 18px rgba(245, 240, 25, 0.35)",
+      }}
+      aria-label="Waiting for the next reel"
+      role="progressbar"
+    />
   );
 }
 
