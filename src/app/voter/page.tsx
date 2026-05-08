@@ -226,7 +226,7 @@ function CornerLogout({ onLogout }: { onLogout: () => void }) {
         minHeight: 36,
         borderRadius: 9999,
         fontSize: "12px",
-        fontWeight: 500,
+        fontWeight: 400,
         letterSpacing: "0.22em",
         border: 0,
         cursor: "pointer",
@@ -389,8 +389,12 @@ function VotingView({
       {/* Title block, vertically anchored just above center */}
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div
-          className="text-[10px] sm:text-xs uppercase font-bold text-white/70"
-          style={{ letterSpacing: "0.4em" }}
+          className="text-[10px] sm:text-xs uppercase text-white/70"
+          style={{
+            letterSpacing: "0.4em",
+            fontFamily: "var(--font-display)",
+            fontWeight: 400,
+          }}
         >
           Now Voting
         </div>
@@ -405,8 +409,12 @@ function VotingView({
           {reelTitle}
         </h1>
         <div
-          className="mt-2 text-xs sm:text-sm uppercase font-bold text-white/85"
-          style={{ letterSpacing: "0.28em" }}
+          className="mt-2 text-xs sm:text-sm uppercase text-white/85"
+          style={{
+            letterSpacing: "0.28em",
+            fontFamily: "var(--font-display)",
+            fontWeight: 400,
+          }}
         >
           {creator}
         </div>
@@ -432,8 +440,13 @@ function VotingView({
         <div className="mt-3 relative">
           {/* tick labels above */}
           <div
-            className="flex justify-between text-[10px] sm:text-xs uppercase font-bold mb-1.5"
-            style={{ color: YELLOW, letterSpacing: "0.18em" }}
+            className="flex justify-between text-[10px] sm:text-xs uppercase mb-1.5"
+            style={{
+              color: YELLOW,
+              letterSpacing: "0.18em",
+              fontFamily: "var(--font-display)",
+              fontWeight: 400,
+            }}
           >
             <span>01</span>
             <span>25</span>
@@ -460,13 +473,15 @@ function VotingView({
             }
           />
 
-          {/* descriptor underneath the thumb */}
+          {/* descriptor underneath the thumb — italic */}
           <div className="relative h-4 mt-1" style={{ color: YELLOW }}>
             <span
-              className="absolute -translate-x-1/2 text-[10px] sm:text-xs uppercase font-bold"
+              className="absolute -translate-x-1/2 text-[10px] sm:text-xs uppercase italic"
               style={{
                 left: `${score}%`,
                 letterSpacing: "0.25em",
+                fontFamily: "var(--font-display)",
+                fontWeight: 400,
               }}
             >
               {descriptor}
@@ -475,10 +490,14 @@ function VotingView({
         </div>
 
         <div
-          className={`mt-3 text-[10px] sm:text-xs uppercase font-bold ${
+          className={`mt-3 text-[10px] sm:text-xs uppercase italic ${
             moved ? "text-white/40" : "text-white/85"
           }`}
-          style={{ letterSpacing: "0.3em" }}
+          style={{
+            letterSpacing: "0.3em",
+            fontFamily: "var(--font-display)",
+            fontWeight: 400,
+          }}
         >
           Drag the slider to vote
         </div>
@@ -486,8 +505,13 @@ function VotingView({
         {/* Vibe section */}
         <div className="mt-5">
           <div
-            className="text-[10px] sm:text-xs uppercase italic font-bold"
-            style={{ color: YELLOW, letterSpacing: "0.2em" }}
+            className="text-[10px] sm:text-xs uppercase italic"
+            style={{
+              color: YELLOW,
+              letterSpacing: "0.2em",
+              fontFamily: "var(--font-display)",
+              fontWeight: 400,
+            }}
           >
             Vibe (optional)
           </div>
@@ -577,8 +601,12 @@ function LockedView({ totalVoted }: { totalVoted: number }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center gap-10 sm:gap-14 py-8">
       <div
-        className="text-sm sm:text-base uppercase font-bold text-white"
-        style={{ letterSpacing: "0.22em" }}
+        className="text-sm sm:text-base uppercase text-white"
+        style={{
+          letterSpacing: "0.22em",
+          fontFamily: "var(--font-display)",
+          fontWeight: 400,
+        }}
       >
         Waiting for next reel
       </div>
@@ -587,14 +615,22 @@ function LockedView({ totalVoted }: { totalVoted: number }) {
 
       <div>
         <p
-          className="text-sm sm:text-base uppercase font-bold text-white"
-          style={{ letterSpacing: "0.16em" }}
+          className="text-sm sm:text-base uppercase text-white"
+          style={{
+            letterSpacing: "0.16em",
+            fontFamily: "var(--font-display)",
+            fontWeight: 400,
+          }}
         >
           Voting will open when the next reel plays
         </p>
         <p
-          className="mt-2 text-[10px] sm:text-xs uppercase font-bold text-white/55"
-          style={{ letterSpacing: "0.22em" }}
+          className="mt-2 text-[10px] sm:text-xs uppercase text-white/55"
+          style={{
+            letterSpacing: "0.22em",
+            fontFamily: "var(--font-extended)",
+            fontWeight: 700,
+          }}
         >
           You&apos;ve voted on {totalVoted} reel
           {totalVoted === 1 ? "" : "s"} so far · Keep this tab open
