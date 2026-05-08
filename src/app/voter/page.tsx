@@ -289,8 +289,8 @@ function SignInView({
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="w-full max-w-md sm:max-w-lg text-center">
           <p
-            className="text-base sm:text-lg leading-[1.35] uppercase font-bold text-white"
-            style={{ letterSpacing: "0.13em" }}
+            className="text-lg sm:text-xl leading-[1.3] uppercase font-bold text-white"
+            style={{ letterSpacing: "0.12em" }}
           >
             Vote on the reels playing on the big screen. Keep this tab open
             for the whole event.
@@ -379,20 +379,24 @@ function VotingView({
       {/* Title block, vertically anchored just above center */}
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div
-          className="text-[11px] sm:text-xs uppercase font-bold text-white/70"
+          className="text-xs sm:text-sm uppercase font-bold text-white/70"
           style={{ letterSpacing: "0.4em" }}
         >
           Now Voting
         </div>
         <h1
-          className="mt-3 text-4xl sm:text-5xl uppercase font-extrabold leading-none break-words max-w-full"
-          style={{ letterSpacing: "0.1em" }}
+          className="mt-3 text-3xl xs:text-4xl sm:text-5xl uppercase leading-none break-words max-w-full"
+          style={{
+            letterSpacing: "0.08em",
+            fontFamily: "var(--font-extended)",
+            fontWeight: 700,
+          }}
         >
           {reelTitle}
         </h1>
         <div
-          className="mt-3 text-base sm:text-lg uppercase font-bold text-white/85"
-          style={{ letterSpacing: "0.32em" }}
+          className="mt-3 text-sm sm:text-base uppercase font-bold text-white/85"
+          style={{ letterSpacing: "0.3em" }}
         >
           {creator}
         </div>
@@ -401,7 +405,7 @@ function VotingView({
       {/* Score + slider */}
       <div className="w-full max-w-xl mx-auto">
         <div
-          className="text-6xl sm:text-7xl leading-none"
+          className="text-[3.75rem] sm:text-7xl leading-none"
           style={{
             color: YELLOW,
             fontFamily: "var(--font-extended)",
@@ -415,10 +419,10 @@ function VotingView({
           <span style={{ color: "rgba(255,255,255,0.45)" }}>/100</span>
         </div>
 
-        <div className="mt-4 relative">
+        <div className="mt-5 relative">
           {/* tick labels above */}
           <div
-            className="flex justify-between text-[10px] sm:text-xs uppercase font-bold mb-2"
+            className="flex justify-between text-xs sm:text-sm uppercase font-bold mb-2"
             style={{ color: YELLOW, letterSpacing: "0.18em" }}
           >
             <span>01</span>
@@ -448,11 +452,11 @@ function VotingView({
 
           {/* descriptor underneath the thumb */}
           <div
-            className="relative h-5 mt-1"
+            className="relative h-5 mt-2"
             style={{ color: YELLOW }}
           >
             <span
-              className="absolute -translate-x-1/2 text-[10px] sm:text-xs uppercase font-bold"
+              className="absolute -translate-x-1/2 text-xs sm:text-sm uppercase font-bold"
               style={{
                 left: `${score}%`,
                 letterSpacing: "0.25em",
@@ -464,7 +468,7 @@ function VotingView({
         </div>
 
         <div
-          className={`mt-4 text-[10px] sm:text-xs uppercase font-bold ${
+          className={`mt-5 text-xs sm:text-sm uppercase font-bold ${
             moved ? "text-white/40" : "text-white/85"
           }`}
           style={{ letterSpacing: "0.3em" }}
@@ -473,9 +477,9 @@ function VotingView({
         </div>
 
         {/* Vibe section */}
-        <div className="mt-6">
+        <div className="mt-7">
           <div
-            className="text-[10px] sm:text-xs uppercase italic"
+            className="text-xs sm:text-sm uppercase italic font-bold"
             style={{ color: YELLOW, letterSpacing: "0.2em" }}
           >
             Vibe (optional)
@@ -488,7 +492,7 @@ function VotingView({
                   key={r.key}
                   type="button"
                   onClick={() => setReaction(active ? null : r.key)}
-                  className="aspect-square rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-transform active:scale-95"
+                  className="aspect-square rounded-2xl flex items-center justify-center text-4xl sm:text-5xl transition-transform active:scale-95"
                   style={{
                     backgroundColor: YELLOW,
                     boxShadow: active
@@ -578,30 +582,36 @@ function LockedView({
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center">
       <div
-        className="text-[11px] sm:text-xs uppercase font-bold text-white/70"
+        className="text-xs sm:text-sm uppercase font-bold text-white/70"
         style={{ letterSpacing: "0.4em" }}
       >
         Vote Locked In
       </div>
       <h2
-        className="mt-3 text-3xl sm:text-4xl uppercase font-extrabold leading-none"
-        style={{ letterSpacing: "0.08em" }}
+        className="mt-3 text-3xl sm:text-4xl uppercase leading-none"
+        style={{
+          letterSpacing: "0.08em",
+          fontFamily: "var(--font-extended)",
+          fontWeight: 700,
+        }}
       >
         {reelTitle}
       </h2>
       <div
-        className="mt-2 text-sm uppercase font-bold text-white/80"
+        className="mt-2 text-sm sm:text-base uppercase font-bold text-white/80"
         style={{ letterSpacing: "0.3em" }}
       >
         {creator}
       </div>
       <div
-        className="mt-8 text-6xl sm:text-7xl leading-none"
+        className="mt-8 text-[3.75rem] sm:text-7xl leading-none"
         style={{
           color: YELLOW,
           fontFamily: "var(--font-extended)",
           fontWeight: 700,
           letterSpacing: "0.02em",
+          textShadow:
+            "0 0 12px rgba(245, 240, 25, 0.55), 0 0 32px rgba(245, 240, 25, 0.25)",
         }}
       >
         {score}
@@ -638,24 +648,24 @@ function WaitingView({
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center">
       <div
-        className="text-[11px] sm:text-xs uppercase font-bold"
+        className="text-xs sm:text-sm uppercase font-bold"
         style={{ color: YELLOW, letterSpacing: "0.4em" }}
       >
         {skipped ? "Entry Skipped" : "Stand By"}
       </div>
       <div
-        className="mt-2 w-2 h-2 rounded-full animate-pulse"
+        className="mt-3 w-2.5 h-2.5 rounded-full animate-pulse"
         style={{ backgroundColor: YELLOW }}
       />
       <p
-        className="mt-8 text-base sm:text-lg uppercase font-bold text-white"
-        style={{ letterSpacing: "0.2em" }}
+        className="mt-8 text-lg sm:text-xl uppercase font-bold text-white leading-snug"
+        style={{ letterSpacing: "0.18em" }}
       >
         {skipped
           ? "We'll bring you back when the next reel opens."
           : "Voting will open when the next reel starts."}
       </p>
-      <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/40">
+      <p className="mt-4 text-xs sm:text-sm uppercase tracking-[0.25em] font-bold text-white/40">
         You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}
       </p>
     </div>
