@@ -239,7 +239,7 @@ function FooterBar({
 }) {
   return (
     <div
-      className="mt-6 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.25em]"
+      className="mt-6 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.25em] font-bold"
       style={{ color: YELLOW, fontFamily: "var(--font-condensed)" }}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -426,7 +426,7 @@ function VotingView({
           style={{
             color: YELLOW,
             fontFamily: "var(--font-extended)",
-            fontWeight: 600,
+            fontWeight: 700,
             letterSpacing: "0.02em",
           }}
         >
@@ -615,7 +615,7 @@ function LockedView({
         style={{
           color: YELLOW,
           fontFamily: "var(--font-extended)",
-          fontWeight: 600,
+          fontWeight: 700,
           letterSpacing: "0.02em",
         }}
       >
