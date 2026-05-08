@@ -190,7 +190,6 @@ export default function VoterPage() {
 // the bottom, content in the middle.
 // --------------------------------------------------------------------------
 function Shell({
-  voterName,
   onLogout,
   children,
 }: {
@@ -200,10 +199,35 @@ function Shell({
 }) {
   return (
     <div className="relative min-h-screen bg-black text-white flex flex-col px-6 pt-6 pb-5 overflow-hidden font-[var(--font-display)]">
+      {onLogout && <CornerLogout onLogout={onLogout} />}
       <FestivalHeader />
       <div className="flex-1 flex flex-col">{children}</div>
-      <FooterBar voterName={voterName} onLogout={onLogout} />
+      <FooterBar />
     </div>
+  );
+}
+
+function CornerLogout({ onLogout }: { onLogout: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onLogout}
+      className="absolute top-4 right-4 z-20 uppercase font-bold transition-opacity hover:opacity-80 active:scale-95"
+      style={{
+        fontFamily: "var(--font-condensed)",
+        color: "#000",
+        backgroundColor: YELLOW,
+        padding: "6px 14px",
+        borderRadius: 9999,
+        fontSize: "11px",
+        letterSpacing: "0.28em",
+        border: 0,
+        cursor: "pointer",
+        boxShadow: HALO_BOX_SHADOW,
+      }}
+    >
+      Logout
+    </button>
   );
 }
 
@@ -214,83 +238,36 @@ function FestivalHeader() {
       <img
         src="/logo.png"
         alt="Indian Scroll Festival · Bangalore International Centre · 16 May 2026"
-        className="w-full max-w-[260px] sm:max-w-[320px] h-auto"
+        className="w-full max-w-[300px] sm:max-w-[360px] h-auto"
       />
     </header>
   );
 }
 
-function FooterBar({
-  voterName,
-  onLogout,
-}: {
-  voterName?: string;
-  onLogout?: () => void;
-}) {
+function FooterBar() {
   return (
     <div
-      className="mt-6 flex items-center justify-between gap-4"
-      style={{ fontFamily: "var(--font-condensed)" }}
+      className="mt-6 flex items-center justify-end gap-3"
+      style={{ color: YELLOW }}
     >
-      <div className="flex items-center gap-3 min-w-0">
-        {voterName && (
-          <span
-            className="truncate max-w-[45vw] font-bold"
-            title={voterName}
-            style={{
-              color: "#FFFFFF",
-              backgroundColor: "rgba(245, 240, 25, 0.12)",
-              border: `1px solid ${YELLOW}`,
-              padding: "5px 12px",
-              borderRadius: 9999,
-              fontSize: "12px",
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-            }}
-          >
-            {voterName}
-          </span>
-        )}
-        {onLogout && (
-          <button
-            onClick={onLogout}
-            className="uppercase font-bold transition-opacity hover:opacity-80 active:scale-95"
-            style={{
-              fontFamily: "var(--font-condensed)",
-              color: "#000",
-              backgroundColor: YELLOW,
-              padding: "5px 12px",
-              borderRadius: 9999,
-              fontSize: "12px",
-              letterSpacing: "0.22em",
-              border: 0,
-              cursor: "pointer",
-            }}
-          >
-            Logout
-          </button>
-        )}
-      </div>
-      <div className="flex items-center gap-3" style={{ color: YELLOW }}>
-        <a
-          href="https://instagram.com/indianscrollfestival"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Instagram"
-          className="hover:opacity-80"
-        >
-          <InstagramIcon />
-        </a>
-        <a
-          href="https://x.com/indianscroll"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="X"
-          className="hover:opacity-80"
-        >
-          <XIcon />
-        </a>
-      </div>
+      <a
+        href="https://instagram.com/indianscrollfestival"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Instagram"
+        className="hover:opacity-80"
+      >
+        <InstagramIcon />
+      </a>
+      <a
+        href="https://x.com/indianscroll"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="X"
+        className="hover:opacity-80"
+      >
+        <XIcon />
+      </a>
     </div>
   );
 }
@@ -424,16 +401,18 @@ function VotingView({
       {/* Score + slider */}
       <div className="w-full max-w-xl mx-auto">
         <div
-          className="text-5xl sm:text-6xl leading-none"
+          className="text-6xl sm:text-7xl leading-none"
           style={{
             color: YELLOW,
             fontFamily: "var(--font-extended)",
             fontWeight: 700,
             letterSpacing: "0.02em",
+            textShadow:
+              "0 0 12px rgba(245, 240, 25, 0.55), 0 0 32px rgba(245, 240, 25, 0.25)",
           }}
         >
           {score}
-          <span className="text-white/40">/100</span>
+          <span style={{ color: "rgba(255,255,255,0.45)" }}>/100</span>
         </div>
 
         <div className="mt-4 relative">
@@ -538,11 +517,13 @@ function VotingView({
               type="button"
               onClick={submit}
               disabled={!moved || submitting}
-              className="w-full px-6 py-4 rounded-full text-base sm:text-lg uppercase font-extrabold transition-transform active:scale-[0.99] disabled:opacity-60"
+              className="w-full px-6 py-4 rounded-full text-lg sm:text-xl uppercase italic transition-transform active:scale-[0.99] disabled:opacity-60"
               style={{
                 backgroundColor: YELLOW,
                 color: "#D62A2A",
-                letterSpacing: "0.3em",
+                letterSpacing: "0.18em",
+                fontFamily: "var(--font-extended)",
+                fontWeight: 700,
               }}
             >
               {submitting ? "Submitting…" : "Submit Score"}
@@ -552,11 +533,13 @@ function VotingView({
           <button
             type="button"
             onClick={onSkip}
-            className="w-full px-6 py-4 rounded-full text-base sm:text-lg uppercase font-bold bg-black transition-transform active:scale-[0.99]"
+            className="w-full px-6 py-4 rounded-full text-lg sm:text-xl uppercase italic bg-black transition-transform active:scale-[0.99]"
             style={{
               color: YELLOW,
               border: `1px solid ${YELLOW}`,
-              letterSpacing: "0.3em",
+              letterSpacing: "0.18em",
+              fontFamily: "var(--font-extended)",
+              fontWeight: 700,
             }}
           >
             Skip Entry
