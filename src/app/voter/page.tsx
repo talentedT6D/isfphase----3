@@ -249,24 +249,23 @@ function FooterBar({
           </span>
         )}
         {onLogout && (
-          <>
-            <span className="opacity-50">·</span>
-            <button
-              onClick={onLogout}
-              className="uppercase hover:opacity-80 underline-offset-2 hover:underline"
-              style={{
-                font: "inherit",
-                color: "inherit",
-                letterSpacing: "inherit",
-                background: "transparent",
-                border: 0,
-                padding: 0,
-                cursor: "pointer",
-              }}
-            >
-              Logout
-            </button>
-          </>
+          <button
+            onClick={onLogout}
+            className="uppercase font-bold transition-opacity hover:opacity-80 active:scale-95"
+            style={{
+              fontFamily: "var(--font-condensed)",
+              color: "#000",
+              backgroundColor: YELLOW,
+              padding: "4px 10px",
+              borderRadius: 9999,
+              fontSize: "10px",
+              letterSpacing: "0.25em",
+              border: 0,
+              cursor: "pointer",
+            }}
+          >
+            Logout
+          </button>
         )}
       </div>
       <div className="flex items-center gap-3" style={{ color: YELLOW }}>
