@@ -21,6 +21,9 @@ interface ReelResult {
   // least one judge has scored the reel.
   judgeRank: number | null;
   audienceAvg: number | null;
+  // Position when reels are ranked by audience average alone. Null until at
+  // least one audience member has scored the reel.
+  audienceRank: number | null;
   audienceCount: number;
   // (sum of all judge scores + audience avg) / (judge count + 1).
   // Null until every judge has voted and the audience average exists.
@@ -100,6 +103,7 @@ export default function LeaderboardPage() {
         judgeAvg,
         judgeRank: null as number | null,
         audienceAvg,
+        audienceRank: null as number | null,
         audienceCount: audienceVotes.length,
         total,
       };
@@ -111,6 +115,14 @@ export default function LeaderboardPage() {
       .sort((a, b) => (b.judgeAvg ?? 0) - (a.judgeAvg ?? 0))
       .forEach((r, i) => {
         r.judgeRank = i + 1;
+      });
+
+    // Same, ranked by audience average alone.
+    [...rows]
+      .filter((r) => r.audienceAvg !== null)
+      .sort((a, b) => (b.audienceAvg ?? 0) - (a.audienceAvg ?? 0))
+      .forEach((r, i) => {
+        r.audienceRank = i + 1;
       });
 
     return rows.sort((a, b) => {
@@ -167,6 +179,9 @@ export default function LeaderboardPage() {
                     <th className="px-3 py-2 font-semibold text-right">
                       Audience avg
                     </th>
+                    <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
+                      Audience rank
+                    </th>
                     <th className="px-3 py-2 font-semibold text-right">
                       Total
                     </th>
@@ -221,6 +236,16 @@ export default function LeaderboardPage() {
                               {" "}
                               · {r.audienceCount}
                             </span>
+                          </>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
+                        {r.audienceRank === null ? (
+                          <span className="text-stone-300">—</span>
+                        ) : (
+                          <>
+                            <span className="text-stone-400">#</span>
+                            {r.audienceRank}
                           </>
                         )}
                       </td>
