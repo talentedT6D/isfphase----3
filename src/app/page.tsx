@@ -205,7 +205,6 @@ function Shell({
       {onLogout && <CornerLogout onLogout={onLogout} />}
       <FestivalHeader />
       <div className="flex-1 flex flex-col">{children}</div>
-      <FooterBar />
     </div>
   );
 }
@@ -251,34 +250,6 @@ function FestivalHeader() {
         className="w-full max-w-[160px] sm:max-w-[220px] h-auto"
       />
     </header>
-  );
-}
-
-function FooterBar() {
-  return (
-    <div
-      className="mt-6 flex items-center justify-end gap-3"
-      style={{ color: YELLOW }}
-    >
-      <a
-        href="https://instagram.com/indianscrollfestival"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Instagram"
-        className="hover:opacity-80"
-      >
-        <InstagramIcon />
-      </a>
-      <a
-        href="https://x.com/indianscroll"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="X"
-        className="hover:opacity-80"
-      >
-        <XIcon />
-      </a>
-    </div>
   );
 }
 
@@ -704,40 +675,6 @@ function GlowField({ children }: { children: React.ReactNode }) {
     >
       {children}
     </div>
-  );
-}
-
-function InstagramIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function XIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
   );
 }
 
