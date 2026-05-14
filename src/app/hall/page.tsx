@@ -10,6 +10,31 @@ import { findPlayable } from "@/lib/non-votable";
 
 type Slot = "A" | "B";
 
+// Wait until a video has buffered enough to play through without stalling,
+// so a reel never starts on screen and then freezes mid-clip. The timeout is
+// a safety net so a slow network can't leave the hall stuck on black.
+function whenPlayable(video: HTMLVideoElement, cb: () => void): () => void {
+  if (video.readyState >= 4) {
+    cb();
+    return () => {};
+  }
+  let fired = false;
+  let timer = 0;
+  const onReady = () => {
+    if (fired) return;
+    fired = true;
+    video.removeEventListener("canplaythrough", onReady);
+    window.clearTimeout(timer);
+    cb();
+  };
+  timer = window.setTimeout(onReady, 8000);
+  video.addEventListener("canplaythrough", onReady);
+  return () => {
+    video.removeEventListener("canplaythrough", onReady);
+    window.clearTimeout(timer);
+  };
+}
+
 export default function HallPage() {
   const state = usePlaybackSubscriber();
 
@@ -141,12 +166,11 @@ function LiveStage({ state }: { state: PlaybackState }) {
         }
         if (isPlaying) activeVideo.play().catch(() => {});
       };
-      if (activeVideo.readyState >= 3) {
+      if (activeVideo.readyState >= 4) {
         start();
         return;
       }
-      activeVideo.addEventListener("canplay", start, { once: true });
-      return () => activeVideo.removeEventListener("canplay", start);
+      return whenPlayable(activeVideo, start);
     }
 
     if (slotReel.current[inactive] !== target) {
@@ -179,12 +203,7 @@ function LiveStage({ state }: { state: PlaybackState }) {
       setActive(inactive);
     };
 
-    if (inactiveVideo.readyState >= 3) {
-      swap();
-      return;
-    }
-    inactiveVideo.addEventListener("canplay", swap, { once: true });
-    return () => inactiveVideo.removeEventListener("canplay", swap);
+    return whenPlayable(inactiveVideo, swap);
     // desiredPosition is intentionally derived from state, so we depend on
     // state.position + state.timestamp instead of recomputing every render.
   }, [reel, isPlaying, active, state.position, state.timestamp]);
