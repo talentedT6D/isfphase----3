@@ -1,0 +1,16 @@
+title: Alive
+name: Ritesh Varma
+phone: 8355863453
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: Ritesh Varma , Tanya Arora
+Notes [If Any]: 
+category: Edits
+set: Set 2
+average_score: 91
+vote_count: 2
+email: riteshvarma@icloud.com
+video_id: Alive_Ritesh_Varma
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778057243193.mov
+creator: @okay.go.please
+Duration: 0:24

@@ -1,0 +1,16 @@
+title: Woh bhi sahi thi
+name: Anurag Kerketta
+phone: 9709632434
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: Anurag Kerketta, Aditya Raj
+Notes [If Any]: 
+category: Comedy
+set: Set 2
+average_score: 67
+vote_count: 3
+email: craphank@gmail.com
+video_id: Woh_bhi_sahi_thi_Anurag_Kerketta
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778060507754.mp4
+creator: @craphank
+Duration: 0:13

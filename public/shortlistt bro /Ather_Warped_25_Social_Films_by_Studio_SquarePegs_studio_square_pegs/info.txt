@@ -1,0 +1,16 @@
+title: Ather Warped '25 Social Films by Studio SquarePegs
+name: studio square pegs - Punit
+phone: 8446298547
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: 
+Notes [If Any]: 
+category: AI
+set: Set 3
+average_score: 74
+vote_count: 3
+email: 
+video_id: Ather_Warped_25_Social_Films_by_Studio_SquarePegs_studio_square_pegs
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778321062718.mp4
+creator: studio square pegs
+Duration: 1:37

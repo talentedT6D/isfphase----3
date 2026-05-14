@@ -1,0 +1,16 @@
+title: Ulpathi
+name: Yesudas Sebastian
+phone: 9633292377
+Caller: Riya
+Status: Coming
+Name of Attendees: 
+Notes [If Any]: Somebody from his banglore team will be attending.
+category: Emotional
+set: Set 1
+average_score: 71
+vote_count: 2
+email: yesudasxsebastian@gmail.com
+video_id: Ulpathi_Yesudas_Sebastian
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1777578250044.mp4
+creator: @yesudasxsebastian
+Duration: 2:00

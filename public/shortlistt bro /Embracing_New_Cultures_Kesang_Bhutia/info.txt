@@ -1,0 +1,16 @@
+title: Embracing New Cultures
+name: Kesang Bhutia
+phone: 7039372696
+Caller: Riya
+Status: Not coming
+Name of Attendees: 
+Notes [If Any]: Based in Kolkata.
+category: Comedy
+set: Set 2
+average_score: 80
+vote_count: 3
+email: bhutiatsheringkesang@gmail.com
+video_id: Embracing_New_Cultures_Kesang_Bhutia
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778010248607.mp4
+creator: @thebeefmomo
+Duration: 0:13

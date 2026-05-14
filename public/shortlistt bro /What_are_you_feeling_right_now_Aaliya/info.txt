@@ -1,0 +1,16 @@
+title: What are you feeling right now?
+name: Aaliya
+phone: 8464055355
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: Aaliya Sheikh , Mustafa Jamshed
+Notes [If Any]: 
+category: Edits
+set: Set 4
+average_score: 70
+vote_count: 3
+email: aaliyasheikh20@gmail.com
+video_id: What_are_you_feeling_right_now_Aaliya
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778430792428.mp4
+creator: @aaliyanware
+Duration: 1:01

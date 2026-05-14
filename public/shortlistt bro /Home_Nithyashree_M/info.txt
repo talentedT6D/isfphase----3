@@ -1,0 +1,16 @@
+title: Home
+name: Nithyashree M
+phone: 8431091912
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: Nithyashree M , Shreshta
+Notes [If Any]: 
+category: Emotional
+set: Set 1
+average_score: 74
+vote_count: 3
+email: mnithyashree181@gmail.com
+video_id: Home_Nithyashree_M
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1777573516128.mp4
+creator: @with.nithya
+Duration: 1:43

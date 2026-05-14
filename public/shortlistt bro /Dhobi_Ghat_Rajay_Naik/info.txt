@@ -1,0 +1,16 @@
+title: Dhobi Ghat
+name: Rajay Naik
+phone: 9422852413
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: Rajay Naik , Riddhima Naik
+Notes [If Any]: 
+category: Emotional
+set: Set 2
+average_score: 82
+vote_count: 3
+email: whereisrajay@gmail.com
+video_id: Dhobi_Ghat_Rajay_Naik
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1777889599971.MP4
+creator: @https://www.instagram.com/_where_is_rajay_/
+Duration: 1:00

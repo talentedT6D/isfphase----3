@@ -1,0 +1,16 @@
+title: whatdoyouseeafteryoudie?
+name: Razaid Aziz K
+phone: 8528222221
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: Razaid Aziz K , Rudra Pratap
+Notes [If Any]: 
+category: Emotional
+set: Set 1
+average_score: 71
+vote_count: 2
+email: razaid2006@gmail.com
+video_id: whatdoyouseeafteryoudie_Razaid_Aziz_K
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1777805075216.mp4
+creator: @razzz
+Duration: 1:35

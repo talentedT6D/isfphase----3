@@ -1,0 +1,16 @@
+title: Comedy - Self care
+name: Akash N
+phone: 8951040886
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: Akash N, Kshama Narasimhan
+Notes [If Any]: 
+category: Comedy
+set: Set 3
+average_score: 63
+vote_count: 3
+email: aakash0197@yahoo.co.uk
+video_id: Comedy_-_Self_care_Akash_N
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778262003401.mp4
+creator: @aakash0197
+Duration: 0:12

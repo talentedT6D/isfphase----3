@@ -1,0 +1,16 @@
+title: F1: Mumbai GP
+name: Naman Kapri
+phone: 7977896746
+Caller: Saanjali
+Status: Not coming
+Name of Attendees: 
+Notes [If Any]: will let me know in a bit if he's bringing a +1
+category: Edits
+set: Set 1
+average_score: 66
+vote_count: 3
+email: kaprinaman@gmail.com
+video_id: F1_Mumbai_GP_Naman_Kapri
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1777123613811.MP4
+creator: @namannkapri
+Duration: 1:09

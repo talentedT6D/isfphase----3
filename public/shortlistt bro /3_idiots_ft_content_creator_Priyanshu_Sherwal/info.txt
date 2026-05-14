@@ -1,0 +1,16 @@
+title: 3 idiots ft. content creator
+name: Priyanshu Sherwal
+phone: 7340220430
+Caller: Riya
+Status: Not coming
+Name of Attendees: 
+Notes [If Any]: He is sick, will be able to confirm in a few days. He is based out of jaipur. From what i judge, i don't think he will be coming. 
+category: Comedy
+set: Set 2
+average_score: 91
+vote_count: 3
+email: priyanshusherwalvlogs@gmail.com
+video_id: 3_idiots_ft_content_creator_Priyanshu_Sherwal
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778213297811.mp4
+creator: @priyanshu_verse
+Duration: 1:36

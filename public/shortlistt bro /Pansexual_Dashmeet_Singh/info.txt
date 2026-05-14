@@ -1,0 +1,16 @@
+title: Pansexual
+name: Dashmeet Singh
+phone: 8796910167
+Caller: Riya
+Status: 
+Name of Attendees: 
+Notes [If Any]: Will confirm by EOD.
+category: Comedy
+set: Set 4
+average_score: 68
+vote_count: 3
+email: hey.dashmeet@gmail.com
+video_id: Pansexual_Dashmeet_Singh
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778410409264.mp4
+creator: @Dashmeet.xd
+Duration: 0:12

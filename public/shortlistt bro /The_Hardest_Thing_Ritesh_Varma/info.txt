@@ -1,0 +1,16 @@
+title: The Hardest Thing
+name: Ritesh Varma
+phone: 8355863453
+Caller: Riya
+Status: 
+Name of Attendees: 
+Notes [If Any]: already accounted in f3
+category: Emotional
+set: Set 2
+average_score: 72
+vote_count: 3
+email: riteshvarma@icloud.com
+video_id: The_Hardest_Thing_Ritesh_Varma
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778057447129.mp4
+creator: @okay.go.please
+Duration: 0:30

@@ -1,0 +1,16 @@
+title: Spoken FIlm
+name: Rajay Naik
+phone: 9422852413
+Caller: Saanjali
+Status: 
+Name of Attendees: already accounted in G5
+Notes [If Any]: Confirmed for his last film. @c4
+category: Emotional
+set: Set 1
+average_score: 65
+vote_count: 2
+email: whereisrajay@gmail.com
+video_id: Spoken_FIlm_Rajay_Naik
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1776937763694.mp4
+creator: @https://www.instagram.com/_where_is_rajay_/
+Duration: 0:54
