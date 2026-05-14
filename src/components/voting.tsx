@@ -94,7 +94,7 @@ export function VotingExperience({
       );
     }
   } else if (nonVotableReel && playback.status !== "stopped") {
-    body = <NonVotableView text={nonVotableReel.voter_text} />;
+    body = <NonVotableView />;
   } else {
     body = <WaitingView totalVoted={myVotes.length} />;
   }
@@ -514,20 +514,16 @@ function WaitingView({ totalVoted }: { totalVoted: number }) {
 
 // --------------------------------------------------------------------------
 // Non-votable view — shown while a non-votable video is on the hall screen.
-// There is no slider; the audience just sees this video's own message.
+// There is no slider; the audience just sees a fixed grey message.
 // --------------------------------------------------------------------------
-function NonVotableView({ text }: { text: string }) {
+function NonVotableView() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center">
-      <div
-        className="w-2 h-2 rounded-full animate-pulse"
-        style={{ backgroundColor: YELLOW }}
-      />
       <p
-        className="mt-6 text-sm sm:text-base uppercase font-bold text-white leading-snug max-w-sm"
-        style={{ letterSpacing: "0.16em" }}
+        className="text-sm sm:text-base uppercase font-bold leading-snug max-w-sm"
+        style={{ letterSpacing: "0.16em", color: "#9CA3AF" }}
       >
-        {text}
+        This video is not an entry
       </p>
     </div>
   );

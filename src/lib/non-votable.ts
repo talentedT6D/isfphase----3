@@ -4,14 +4,13 @@ import { REELS } from "./reels";
 // Videos that get cast to the hall screen but are NOT open for voting.
 //
 // To add one: drop its video file in public/non-votable-videos/ and add an
-// entry here (via non-votable.json). `voter_text` is the message shown to
-// the audience on their phones while this video is on the big screen — each
-// non-votable video has its own text.
+// entry here (via non-votable.json). While one is on the big screen, the
+// audience sees a fixed "This video is not an entry" message instead of the
+// voting slider.
 export interface NonVotableReel {
   reel_id: string;
   file_path: string;
   title: string;
-  voter_text: string;
 }
 
 export const NON_VOTABLE_REELS: readonly NonVotableReel[] =

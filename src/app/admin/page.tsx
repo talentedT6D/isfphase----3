@@ -641,7 +641,7 @@ function NonVotableLibrary({
                     {reel.title}
                   </div>
                   <div className="text-stone-500 text-xs truncate">
-                    {reel.voter_text}
+                    Cast only · not up for voting
                   </div>
                 </div>
                 <button
