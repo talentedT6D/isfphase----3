@@ -42,7 +42,6 @@ export function VotingExperience({
   onLogout: () => void;
 }) {
   const [myVotes, setMyVotes] = useState<VoteRow[]>([]);
-  const [skippedReels, setSkippedReels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +67,6 @@ export function VotingExperience({
     () => myVotes.find((v) => v.reel_id === voting.reel_id),
     [myVotes, voting.reel_id],
   );
-  const skipped = !!voting.reel_id && skippedReels.has(voting.reel_id);
 
   const onSubmitted = (row: VoteRow) => {
     setMyVotes((prev) => {
@@ -77,20 +75,10 @@ export function VotingExperience({
     });
   };
 
-  const onSkip = (reelId: string) => {
-    setSkippedReels((prev) => {
-      const next = new Set(prev);
-      next.add(reelId);
-      return next;
-    });
-  };
-
   let body: React.ReactNode;
   if (voting.status === "open" && currentReel) {
     if (alreadyVoted && myVoteForCurrent) {
       body = <LockedView totalVoted={myVotes.length} />;
-    } else if (skipped) {
-      body = <WaitingView totalVoted={myVotes.length} skipped />;
     } else {
       body = (
         <VotingView
@@ -99,7 +87,6 @@ export function VotingExperience({
           reelTitle={currentReel.title}
           creator={currentReel.creator}
           onSubmitted={onSubmitted}
-          onSkip={() => onSkip(currentReel.reel_id)}
         />
       );
     }
@@ -188,14 +175,12 @@ function VotingView({
   reelTitle,
   creator,
   onSubmitted,
-  onSkip,
 }: {
   voter: Voter;
   reelId: string;
   reelTitle: string;
   creator: string;
   onSubmitted: (row: VoteRow) => void;
-  onSkip: () => void;
 }) {
   const [score, setScore] = useState(50);
   const [moved, setMoved] = useState(false);
@@ -397,8 +382,8 @@ function VotingView({
           <p className="text-red-400 text-xs mt-4 text-center">{error}</p>
         )}
 
-        {/* Action buttons */}
-        <div className="mt-5 space-y-2.5">
+        {/* Action button */}
+        <div className="mt-5">
           <GlowField>
             <button
               type="button"
@@ -416,21 +401,6 @@ function VotingView({
               {submitting ? "Submitting…" : "Submit Score"}
             </button>
           </GlowField>
-
-          <button
-            type="button"
-            onClick={onSkip}
-            className="w-full min-h-[48px] px-5 py-3 rounded-full text-sm sm:text-base uppercase italic bg-black transition-transform active:scale-[0.99]"
-            style={{
-              color: YELLOW,
-              border: `1px solid ${YELLOW}`,
-              letterSpacing: "0.18em",
-              fontFamily: "var(--font-extended)",
-              fontWeight: 700,
-            }}
-          >
-            Skip Entry
-          </button>
         </div>
       </div>
     </div>
@@ -509,22 +479,16 @@ function YellowSpinner() {
 }
 
 // --------------------------------------------------------------------------
-// Waiting view (no reel open or this reel skipped)
+// Waiting view (no reel open)
 // --------------------------------------------------------------------------
-function WaitingView({
-  totalVoted,
-  skipped,
-}: {
-  totalVoted: number;
-  skipped?: boolean;
-}) {
+function WaitingView({ totalVoted }: { totalVoted: number }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center">
       <div
         className="text-[10px] sm:text-xs uppercase font-bold"
         style={{ color: YELLOW, letterSpacing: "0.4em" }}
       >
-        {skipped ? "Entry Skipped" : "Stand By"}
+        Stand By
       </div>
       <div
         className="mt-2 w-2 h-2 rounded-full animate-pulse"
@@ -534,9 +498,7 @@ function WaitingView({
         className="mt-6 text-sm sm:text-base uppercase font-bold text-white leading-snug max-w-xs"
         style={{ letterSpacing: "0.16em" }}
       >
-        {skipped
-          ? "We'll bring you back when the next reel opens."
-          : "Voting will open when the next reel starts."}
+        Voting will open when the next reel starts.
       </p>
       <p className="mt-3 text-[10px] uppercase tracking-[0.25em] font-bold text-white/40">
         You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}
