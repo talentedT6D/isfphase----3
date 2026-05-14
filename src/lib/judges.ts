@@ -24,6 +24,12 @@ export function isJudgeId(userId: string | null | undefined): boolean {
   return !!userId && JUDGE_IDS.includes(userId);
 }
 
-// Shared password gate for the /judge page (frontend-only, same trust model
-// as the admin password).
-export const JUDGE_PASSWORD = "judge2026";
+// Each judge's password is the first two letters of their name + "2107"
+// (e.g. "Zervaan Bunshah" -> "ze2107"). Compared case-insensitively.
+export function judgePassword(judge: Judge): string {
+  return judge.name.slice(0, 2).toLowerCase() + "2107";
+}
+
+export function checkJudgePassword(judge: Judge, input: string): boolean {
+  return input.trim().toLowerCase() === judgePassword(judge);
+}

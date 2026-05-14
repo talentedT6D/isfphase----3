@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { JUDGES, JUDGE_PASSWORD, type Judge } from "@/lib/judges";
+import { JUDGES, checkJudgePassword, type Judge } from "@/lib/judges";
 import {
   FullBleed,
   GlowField,
@@ -9,38 +9,25 @@ import {
   VotingExperience,
 } from "@/components/voting";
 
-const JUDGE_AUTH_KEY = "isf-judge-ok";
 const JUDGE_ID_KEY = "isf-judge-id";
 
 export default function JudgePage() {
-  const [authed, setAuthed] = useState<boolean | null>(null);
   const [judge, setJudge] = useState<Judge | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const ok = window.localStorage.getItem(JUDGE_AUTH_KEY) === "1";
     const savedId = window.localStorage.getItem(JUDGE_ID_KEY);
-    setAuthed(ok);
     setJudge(JUDGES.find((j) => j.id === savedId) ?? null);
+    setReady(true);
   }, []);
 
-  if (authed === null) return <FullBleed>Loading…</FullBleed>;
-
-  if (!authed) {
-    return (
-      <GateView
-        onUnlock={() => {
-          window.localStorage.setItem(JUDGE_AUTH_KEY, "1");
-          setAuthed(true);
-        }}
-      />
-    );
-  }
+  if (!ready) return <FullBleed>Loading…</FullBleed>;
 
   if (!judge) {
     return (
-      <PickJudgeView
-        onPick={(j) => {
+      <LoginView
+        onLogin={(j) => {
           window.localStorage.setItem(JUDGE_ID_KEY, j.id);
           setJudge(j);
         }}
@@ -49,38 +36,39 @@ export default function JudgePage() {
   }
 
   const handleLogout = () => {
-    window.localStorage.removeItem(JUDGE_AUTH_KEY);
     window.localStorage.removeItem(JUDGE_ID_KEY);
     setJudge(null);
-    setAuthed(false);
   };
 
   return <VotingExperience voter={judge} onLogout={handleLogout} />;
 }
 
 // --------------------------------------------------------------------------
-// Password gate
+// Login: pick your name, enter your password.
 // --------------------------------------------------------------------------
-function GateView({ onUnlock }: { onUnlock: () => void }) {
+function LoginView({ onLogin }: { onLogin: (judge: Judge) => void }) {
+  const [judgeId, setJudgeId] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw === JUDGE_PASSWORD) {
-      onUnlock();
-    } else {
-      setErr("Wrong password");
+    const judge = JUDGES.find((j) => j.id === judgeId);
+    if (!judge) {
+      setErr("Pick your name");
+      return;
     }
+    if (!checkJudgePassword(judge, pw)) {
+      setErr("Wrong password");
+      return;
+    }
+    onLogin(judge);
   };
 
   return (
     <Shell>
       <div className="flex-1 flex flex-col items-center justify-center">
-        <form
-          onSubmit={submit}
-          className="w-full max-w-sm text-center"
-        >
+        <form onSubmit={submit} className="w-full max-w-sm text-center">
           <div
             className="text-[10px] sm:text-xs uppercase font-bold"
             style={{ color: "#F5F019", letterSpacing: "0.4em" }}
@@ -91,8 +79,25 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
             className="mt-3 text-sm sm:text-base uppercase font-bold text-white"
             style={{ letterSpacing: "0.12em" }}
           >
-            Enter the judge password to start scoring.
+            Pick your name and enter your password to start scoring.
           </p>
+
+          <select
+            value={judgeId}
+            onChange={(e) => {
+              setJudgeId(e.target.value);
+              setErr("");
+            }}
+            className="mt-6 w-full min-h-[48px] bg-black text-white text-center px-5 py-3 rounded-full text-sm uppercase border border-white/25 focus:outline-none focus:border-white/70"
+            style={{ letterSpacing: "0.2em" }}
+          >
+            <option value="">Select your name…</option>
+            {JUDGES.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.name}
+              </option>
+            ))}
+          </select>
 
           <input
             type="password"
@@ -101,9 +106,8 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
               setPw(e.target.value);
               setErr("");
             }}
-            autoFocus
             placeholder="Password"
-            className="mt-6 w-full min-h-[48px] bg-black text-white text-center px-5 py-3 rounded-full text-sm uppercase border border-white/25 focus:outline-none focus:border-white/70"
+            className="mt-2.5 w-full min-h-[48px] bg-black text-white text-center px-5 py-3 rounded-full text-sm uppercase border border-white/25 focus:outline-none focus:border-white/70"
             style={{ letterSpacing: "0.2em" }}
           />
 
@@ -121,47 +125,6 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
             </GlowField>
           </div>
         </form>
-      </div>
-    </Shell>
-  );
-}
-
-// --------------------------------------------------------------------------
-// Judge picker
-// --------------------------------------------------------------------------
-function PickJudgeView({ onPick }: { onPick: (judge: Judge) => void }) {
-  return (
-    <Shell>
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-sm text-center">
-          <div
-            className="text-[10px] sm:text-xs uppercase font-bold"
-            style={{ color: "#F5F019", letterSpacing: "0.4em" }}
-          >
-            Who&apos;s judging?
-          </div>
-          <p
-            className="mt-3 text-sm sm:text-base uppercase font-bold text-white"
-            style={{ letterSpacing: "0.12em" }}
-          >
-            Tap your name to start.
-          </p>
-
-          <div className="mt-6 space-y-2.5">
-            {JUDGES.map((j) => (
-              <GlowField key={j.id}>
-                <button
-                  type="button"
-                  onClick={() => onPick(j)}
-                  className="w-full min-h-[48px] bg-black text-white px-5 py-3 rounded-full text-sm sm:text-base uppercase font-bold transition-transform active:scale-[0.99]"
-                  style={{ letterSpacing: "0.2em" }}
-                >
-                  {j.name}
-                </button>
-              </GlowField>
-            ))}
-          </div>
-        </div>
       </div>
     </Shell>
   );
