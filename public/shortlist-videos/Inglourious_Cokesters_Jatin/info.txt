@@ -1,0 +1,8 @@
+title: Inglourious Cokesters
+name: Jatin
+phone: 9026794680
+email: jatinbutpersonal@gmail.com
+category: Comedy
+set: Set 5
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778483244448.mp4
+Duration: 01:59
