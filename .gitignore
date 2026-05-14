@@ -33,3 +33,8 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Shortlist video assets (~700MB) live on the main branch; they exceed this
+# remote's push size limit, so they are not tracked on this branch. See the
+# "Set the 30 shortlisted videos as the voting reels" commit.
+/public/shortlist-videos/
