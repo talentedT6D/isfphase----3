@@ -229,10 +229,6 @@ function CornerLogout({ onLogout }: { onLogout: () => void }) {
         letterSpacing: "0.22em",
         border: 0,
         cursor: "pointer",
-        textShadow:
-          "0 0 6px rgba(255,255,255,0.7), 0 0 14px rgba(255,255,255,0.4), 0 0 24px rgba(255,255,255,0.2)",
-        boxShadow:
-          "0 0 0 1px rgba(255,255,255,0.12), 0 0 22px rgba(255, 220, 210, 0.45), 0 0 50px rgba(255, 200, 180, 0.25)",
       }}
     >
       Logout
