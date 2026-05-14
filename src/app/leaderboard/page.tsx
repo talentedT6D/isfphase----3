@@ -19,6 +19,9 @@ interface ReelResult {
   judgeAvg: number | null;
   audienceAvg: number | null;
   audienceCount: number;
+  // (sum of all judge scores + audience avg) / (judge count + 1).
+  // Null until every judge has voted and the audience average exists.
+  total: number | null;
 }
 
 const JUDGE_ID_SET = new Set(JUDGE_IDS);
@@ -79,6 +82,13 @@ export default function LeaderboardPage() {
           audienceVotes.length
         : null;
 
+      const allJudgesVoted = castJudgeScores.length === JUDGES.length;
+      const total =
+        allJudgesVoted && audienceAvg !== null
+          ? (castJudgeScores.reduce((a, b) => a + b, 0) + audienceAvg) /
+            (JUDGES.length + 1)
+          : null;
+
       return {
         reel_id: reel.reel_id,
         title: reel.title,
@@ -87,10 +97,14 @@ export default function LeaderboardPage() {
         judgeAvg,
         audienceAvg,
         audienceCount: audienceVotes.length,
+        total,
       };
     });
 
     return rows.sort((a, b) => {
+      const ta = a.total ?? -1;
+      const tb = b.total ?? -1;
+      if (tb !== ta) return tb - ta;
       const ja = a.judgeAvg ?? -1;
       const jb = b.judgeAvg ?? -1;
       if (jb !== ja) return jb - ja;
@@ -111,7 +125,7 @@ export default function LeaderboardPage() {
         <div className="max-w-4xl mx-auto">
           <header className="mb-3">
             <h1 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
-              REEL RANKING · BY JUDGE AVERAGE
+              REEL RANKING · BY TOTAL SCORE
             </h1>
           </header>
 
@@ -137,6 +151,9 @@ export default function LeaderboardPage() {
                     </th>
                     <th className="px-3 py-2 font-semibold text-right">
                       Audience avg
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-right">
+                      Total
                     </th>
                   </tr>
                 </thead>
@@ -182,6 +199,13 @@ export default function LeaderboardPage() {
                           </>
                         )}
                       </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums font-bold text-stone-900">
+                        {r.total === null ? (
+                          <span className="text-stone-300">—</span>
+                        ) : (
+                          r.total.toFixed(1)
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,8 +214,9 @@ export default function LeaderboardPage() {
           )}
 
           <p className="mt-3 text-[10px] text-stone-400 tracking-wider">
-            Judge scores are shown individually. Audience avg also shows the
-            number of audience votes. Updates live.
+            Total = (sum of the {JUDGES.length} judge scores + audience avg) ÷{" "}
+            {JUDGES.length + 1}, shown once every judge has voted. Audience avg
+            also shows the number of audience votes. Updates live.
           </p>
         </div>
       </section>
