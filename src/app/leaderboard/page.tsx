@@ -17,6 +17,9 @@ interface ReelResult {
   creator: string;
   judgeScores: (number | null)[]; // one slot per judge, in JUDGES order
   judgeAvg: number | null;
+  // Position when reels are ranked by judge average alone. Null until at
+  // least one judge has scored the reel.
+  judgeRank: number | null;
   audienceAvg: number | null;
   audienceCount: number;
   // (sum of all judge scores + audience avg) / (judge count + 1).
@@ -95,11 +98,20 @@ export default function LeaderboardPage() {
         creator: reel.creator,
         judgeScores,
         judgeAvg,
+        judgeRank: null as number | null,
         audienceAvg,
         audienceCount: audienceVotes.length,
         total,
       };
     });
+
+    // Rank by judge average alone, then stamp each reel with its position.
+    [...rows]
+      .filter((r) => r.judgeAvg !== null)
+      .sort((a, b) => (b.judgeAvg ?? 0) - (a.judgeAvg ?? 0))
+      .forEach((r, i) => {
+        r.judgeRank = i + 1;
+      });
 
     return rows.sort((a, b) => {
       const ta = a.total ?? -1;
@@ -149,6 +161,9 @@ export default function LeaderboardPage() {
                     <th className="px-3 py-2 font-semibold text-right">
                       Judge avg
                     </th>
+                    <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
+                      Judge rank
+                    </th>
                     <th className="px-3 py-2 font-semibold text-right">
                       Audience avg
                     </th>
@@ -184,6 +199,16 @@ export default function LeaderboardPage() {
                           <span className="text-stone-300">—</span>
                         ) : (
                           r.judgeAvg.toFixed(1)
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
+                        {r.judgeRank === null ? (
+                          <span className="text-stone-300">—</span>
+                        ) : (
+                          <>
+                            <span className="text-stone-400">#</span>
+                            {r.judgeRank}
+                          </>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
