@@ -5,7 +5,8 @@ import {
   usePlaybackSubscriber,
   type PlaybackState,
 } from "@/lib/channels";
-import { REELS, findReel } from "@/lib/reels";
+import { REELS } from "@/lib/reels";
+import { findPlayable } from "@/lib/non-votable";
 
 type Slot = "A" | "B";
 
@@ -49,7 +50,7 @@ function PreShow() {
 }
 
 function LiveStage({ state }: { state: PlaybackState }) {
-  const reel = findReel(state.reel_id);
+  const reel = findPlayable(state.reel_id);
   const isPlaying = state.status === "playing";
   // Where admin says we should be in the reel right now. We compute this on
   // every render because admin sends `position` at the broadcast moment;

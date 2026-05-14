@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useVotingSubscriber } from "@/lib/channels";
+import { usePlaybackSubscriber, useVotingSubscriber } from "@/lib/channels";
 import { findVoterReel } from "@/lib/reels";
+import { findNonVotableReel } from "@/lib/non-votable";
 
 export type Reaction = "LOL" | "FIRE" | "DEAD" | "KISS";
 
@@ -58,7 +59,9 @@ export function VotingExperience({
   }, [voter.id]);
 
   const voting = useVotingSubscriber();
+  const playback = usePlaybackSubscriber();
   const currentReel = findVoterReel(voting.reel_id);
+  const nonVotableReel = findNonVotableReel(playback.reel_id);
   const alreadyVoted = useMemo(
     () => myVotes.some((v) => v.reel_id === voting.reel_id),
     [myVotes, voting.reel_id],
@@ -90,6 +93,8 @@ export function VotingExperience({
         />
       );
     }
+  } else if (nonVotableReel && playback.status !== "stopped") {
+    body = <NonVotableView text={nonVotableReel.voter_text} />;
   } else {
     body = <WaitingView totalVoted={myVotes.length} />;
   }
@@ -502,6 +507,27 @@ function WaitingView({ totalVoted }: { totalVoted: number }) {
       </p>
       <p className="mt-3 text-[10px] uppercase tracking-[0.25em] font-bold text-white/40">
         You&apos;ve voted on {totalVoted} reel{totalVoted === 1 ? "" : "s"}
+      </p>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Non-votable view — shown while a non-votable video is on the hall screen.
+// There is no slider; the audience just sees this video's own message.
+// --------------------------------------------------------------------------
+function NonVotableView({ text }: { text: string }) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center text-center">
+      <div
+        className="w-2 h-2 rounded-full animate-pulse"
+        style={{ backgroundColor: YELLOW }}
+      />
+      <p
+        className="mt-6 text-sm sm:text-base uppercase font-bold text-white leading-snug max-w-sm"
+        style={{ letterSpacing: "0.16em" }}
+      >
+        {text}
       </p>
     </div>
   );

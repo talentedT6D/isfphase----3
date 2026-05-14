@@ -10,6 +10,7 @@ import {
   type VotingState,
 } from "@/lib/channels";
 import { REELS, findReel, formatRuntime } from "@/lib/reels";
+import { NON_VOTABLE_REELS, type NonVotableReel } from "@/lib/non-votable";
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_PASSWORD = "admin123";
@@ -150,6 +151,24 @@ function Panel() {
     });
   };
 
+  // Cast a non-votable video to the hall screen without opening voting.
+  const castNonVotable = (idx: number) => {
+    const reel = NON_VOTABLE_REELS[idx];
+    if (!reel) return;
+    sendPlayback({
+      reel_id: reel.reel_id,
+      status: "playing",
+      timestamp: Date.now(),
+      position: 0,
+    });
+    sendVoting({
+      reel_id: null,
+      status: "idle",
+      opened_at: null,
+      closed_at: null,
+    });
+  };
+
   const onPlayPause = () => {
     if (!playbackReel) {
       playReel(0);
@@ -263,6 +282,11 @@ function Panel() {
         reels={filtered}
         playbackReelId={playbackReel?.reel_id ?? null}
         onPlay={playReel}
+      />
+      <NonVotableLibrary
+        reels={NON_VOTABLE_REELS}
+        castReelId={playback.reel_id}
+        onCast={castNonVotable}
       />
       <VoterList
         reelId={voting.reel_id}
@@ -574,6 +598,67 @@ function Library({
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+// Non-votable videos: cast to the hall screen, never opens voting.
+function NonVotableLibrary({
+  reels,
+  castReelId,
+  onCast,
+}: {
+  reels: readonly NonVotableReel[];
+  castReelId: string | null;
+  onCast: (idx: number) => void;
+}) {
+  return (
+    <section className="p-5 bg-stone-50 border-t border-stone-200">
+      <header className="mb-3 max-w-3xl mx-auto">
+        <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+          NON-VOTABLE · {reels.length}
+        </h2>
+      </header>
+      {reels.length === 0 ? (
+        <p className="max-w-3xl mx-auto text-sm text-stone-500">
+          Drop video files in <code>public/non-votable-videos/</code> and list
+          them in <code>src/lib/non-votable.json</code>. Casting one plays it
+          on the hall screen without opening voting.
+        </p>
+      ) : (
+        <div className="bg-white border border-stone-300 divide-y divide-stone-200 max-w-3xl mx-auto">
+          {reels.map((reel, idx) => {
+            const isCast = reel.reel_id === castReelId;
+            return (
+              <div
+                key={reel.reel_id}
+                className={`grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-2.5 ${
+                  isCast ? "bg-emerald-50" : ""
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm truncate">
+                    {reel.title}
+                  </div>
+                  <div className="text-stone-500 text-xs truncate">
+                    {reel.voter_text}
+                  </div>
+                </div>
+                <button
+                  onClick={() => onCast(idx)}
+                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    isCast
+                      ? "bg-emerald-600 text-white"
+                      : "bg-stone-900 text-white hover:bg-stone-700"
+                  }`}
+                >
+                  {isCast ? "On screen" : "Cast"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
