@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "reel_id": "nv-001",
+    "file_path": "/non-votable-videos/Smoking%20Warning.mp4",
+    "title": "Smoking Warning"
+  },
+  {
+    "reel_id": "nv-002",
+    "file_path": "/non-votable-videos/UBFC_1.mp4",
+    "title": "UBFC 1"
+  }
+]
