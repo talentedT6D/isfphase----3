@@ -10,29 +10,19 @@ import { findPlayable } from "@/lib/non-votable";
 
 type Slot = "A" | "B";
 
-// Wait until a video has buffered enough to play through without stalling,
-// so a reel never starts on screen and then freezes mid-clip. The timeout is
-// a safety net so a slow network can't leave the hall stuck on black.
+// Start a reel as soon as it has a few frames ready (canplay), so it appears
+// fast. Falls through to a listener if it isn't ready yet.
 function whenPlayable(video: HTMLVideoElement, cb: () => void): () => void {
-  if (video.readyState >= 4) {
+  if (video.readyState >= 3) {
     cb();
     return () => {};
   }
-  let fired = false;
-  let timer = 0;
   const onReady = () => {
-    if (fired) return;
-    fired = true;
-    video.removeEventListener("canplaythrough", onReady);
-    window.clearTimeout(timer);
+    video.removeEventListener("canplay", onReady);
     cb();
   };
-  timer = window.setTimeout(onReady, 8000);
-  video.addEventListener("canplaythrough", onReady);
-  return () => {
-    video.removeEventListener("canplaythrough", onReady);
-    window.clearTimeout(timer);
-  };
+  video.addEventListener("canplay", onReady, { once: true });
+  return () => video.removeEventListener("canplay", onReady);
 }
 
 export default function HallPage() {
@@ -166,10 +156,6 @@ function LiveStage({ state }: { state: PlaybackState }) {
         }
         if (isPlaying) activeVideo.play().catch(() => {});
       };
-      if (activeVideo.readyState >= 4) {
-        start();
-        return;
-      }
       return whenPlayable(activeVideo, start);
     }
 
