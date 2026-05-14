@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ISF 2026 · Judging",
+  title: "Live Scrolling",
   description: "Indian Scroll Festival 2026 · live judging system",
 };
 
