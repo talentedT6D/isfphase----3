@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   usePlaybackSubscriber,
   type PlaybackState,
@@ -36,6 +36,8 @@ function PreShow() {
   if (!first) return <HoldingSlate />;
   return (
     <div className="fixed inset-0 bg-black">
+      {/* Warm the cache for the reels that come right after the opener. */}
+      <PrefetchReels urls={REELS.slice(1, 4).map((r) => r.file_path)} />
       <video
         className="absolute inset-0 w-full h-full object-contain"
         src={first.file_path}
@@ -46,6 +48,18 @@ function PreShow() {
         preload="auto"
       />
     </div>
+  );
+}
+
+// Low-priority <link rel="prefetch"> hints so upcoming reels are already in
+// the browser cache before the operator gets to them.
+function PrefetchReels({ urls }: { urls: string[] }) {
+  return (
+    <>
+      {urls.map((url) => (
+        <link key={url} rel="prefetch" href={url} />
+      ))}
+    </>
   );
 }
 
@@ -81,6 +95,16 @@ function LiveStage({ state }: { state: PlaybackState }) {
     ? REELS.findIndex((r) => r.reel_id === reel.reel_id)
     : -1;
   const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] ?? null : null;
+
+  // nextReel is already buffered into the inactive video slot below; prefetch
+  // a few reels beyond it so Next-button jumps stay instant.
+  const prefetchUrls = useMemo(
+    () =>
+      currentIdx >= 0
+        ? REELS.slice(currentIdx + 2, currentIdx + 5).map((r) => r.file_path)
+        : [],
+    [currentIdx],
+  );
 
   // Drive the active slot to show the current reel. Transitions slide the new
   // reel up from below (Instagram-reel style) while the outgoing reel slides
@@ -183,6 +207,7 @@ function LiveStage({ state }: { state: PlaybackState }) {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
+      <PrefetchReels urls={prefetchUrls} />
       <video
         ref={aRef}
         className="absolute inset-0 w-full h-full object-contain"
