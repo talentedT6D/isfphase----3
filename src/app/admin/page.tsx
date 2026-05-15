@@ -23,7 +23,7 @@ import {
 } from "@/lib/cast-content";
 import { supabase } from "@/lib/supabase";
 
-const ADMIN_PASSWORD = "admin@stack";
+const ADMIN_PASSWORD = "adminstack";
 const ADMIN_KEY = "isf-admin-ok";
 
 export default function AdminPage() {

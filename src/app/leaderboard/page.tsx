@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { REELS } from "@/lib/reels";
 import { JUDGES, JUDGE_IDS } from "@/lib/judges";
 
-const LEADERBOARD_PASSWORD = "lead@stack";
+const LEADERBOARD_PASSWORD = "leadstack";
 const LEADERBOARD_KEY = "isf-leaderboard-ok";
 
 interface RawVote {

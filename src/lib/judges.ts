@@ -24,16 +24,11 @@ export function isJudgeId(userId: string | null | undefined): boolean {
   return !!userId && JUDGE_IDS.includes(userId);
 }
 
-// Each judge's password is the initials of their name + "@stack"
-// (e.g. "Zervaan Bunshah" -> "zb@stack"). Compared case-insensitively.
+// Each judge's password is their first name (lowercase) + "123"
+// (e.g. "Zervaan Bunshah" -> "zervaan123"). Compared case-insensitively.
 export function judgePassword(judge: Judge): string {
-  const initials = judge.name
-    .trim()
-    .split(/\s+/)
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toLowerCase();
-  return initials + "@stack";
+  const firstName = judge.name.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  return firstName + "123";
 }
 
 export function checkJudgePassword(judge: Judge, input: string): boolean {
