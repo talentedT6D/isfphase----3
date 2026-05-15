@@ -7,6 +7,7 @@ import {
 } from "@/lib/channels";
 import { REELS } from "@/lib/reels";
 import { findPlayable } from "@/lib/non-votable";
+import { LOADING_ANIM } from "@/lib/loading-anim";
 
 type Slot = "A" | "B";
 
@@ -36,12 +37,54 @@ export default function HallPage() {
     if (state.timestamp > 0) setSessionStarted(true);
   }, [state.timestamp]);
 
+  // Browser autoplay policy: a video element can't start (with audio) until
+  // the page has had a user gesture. We gate the whole hall behind a click
+  // so playback can start cleanly when admin cues a reel.
+  const [unlocked, setUnlocked] = useState(false);
+  if (!unlocked) return <StartGate onStart={() => setUnlocked(true)} />;
+
   if (!sessionStarted) return <PreShow />;
   // Once admin has cued a reel we keep the video on screen for every state —
   // playing, paused, or stopped. The holding slate only ever shows in the
   // very-initial pre-show / no-reel-yet case (handled by LiveStage when
   // state.reel_id is null).
   return <LiveStage state={state} />;
+}
+
+// One-time gate so the operator has clicked the hall page before any video
+// tries to play with sound. The click in onClick handler primes the browser
+// autoplay allowance for the rest of the session by play()ing a tiny clip
+// synchronously inside the gesture.
+function StartGate({ onStart }: { onStart: () => void }) {
+  const primeRef = useRef<HTMLVideoElement>(null);
+  return (
+    <div
+      className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white cursor-pointer"
+      onClick={async () => {
+        const v = primeRef.current;
+        if (v) {
+          try {
+            await v.play();
+          } catch {}
+        }
+        onStart();
+      }}
+    >
+      <video
+        ref={primeRef}
+        src={LOADING_ANIM.file_path}
+        muted
+        playsInline
+        preload="auto"
+        style={{ display: "none" }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="ISF" className="h-32 w-auto" />
+      <div className="mt-8 text-white/70 text-sm tracking-[0.3em]">
+        CLICK ANYWHERE TO START
+      </div>
+    </div>
+  );
 }
 
 // Muted, looping clip of the first reel so the hall isn't sitting on a dark
