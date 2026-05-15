@@ -104,7 +104,26 @@ function Panel() {
     () => REELS.findIndex((r) => r.reel_id === playback.reel_id),
     [playback.reel_id],
   );
-  const playbackReel = playbackIdx >= 0 ? REELS[playbackIdx] : null;
+  // What's currently on the hall screen — votable reel or non-votable cast.
+  // Synthesises a minimal Reel shape for non-votable items so the existing
+  // play/pause/seek controls just work.
+  const playbackReel = useMemo(() => {
+    if (playbackIdx >= 0) return REELS[playbackIdx];
+    const nv = NON_VOTABLE_REELS.find(
+      (r) => r.reel_id === playback.reel_id,
+    );
+    if (nv) {
+      return {
+        reel_id: nv.reel_id,
+        file_path: nv.file_path,
+        title: nv.title,
+        creator: "Non-votable",
+        category: "Cast",
+        runtime: nv.runtime,
+      };
+    }
+    return null;
+  }, [playbackIdx, playback.reel_id]);
   const nextReel =
     playbackIdx >= 0 ? REELS[playbackIdx + 1] ?? null : REELS[0] ?? null;
 
@@ -181,7 +200,14 @@ function Panel() {
 
   const onPlayPause = () => {
     if (!playbackReel) {
-      playReel(0);
+      // Show starts with the first non-votable; the hall auto-advances
+      // through the rest of the non-votable set and then through every
+      // votable reel.
+      if (NON_VOTABLE_REELS.length > 0) {
+        castNonVotable(0);
+      } else {
+        playReel(0);
+      }
       return;
     }
     sendPlayback({

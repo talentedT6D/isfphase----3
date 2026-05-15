@@ -9,7 +9,11 @@ import {
   type VotingState,
 } from "@/lib/channels";
 import { REELS } from "@/lib/reels";
-import { findPlayable } from "@/lib/non-votable";
+import {
+  NON_VOTABLE_REELS,
+  findPlayable,
+  showOrderNext,
+} from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
 
 type Slot = "A" | "B";
@@ -168,24 +172,46 @@ function LiveStage({
     if (bRef.current) bRef.current.style.transform = "translate3d(0,100%,0)";
   }, []);
 
-  const currentIdx = reel
-    ? REELS.findIndex((r) => r.reel_id === reel.reel_id)
-    : -1;
-
-  // Remember the index of the last *regular* reel we were on, so during the
+  // Remember the index of the last *votable* reel we were on, so during the
   // interstitial loading clip we can still preload the next real reel.
-  const lastRegularIdxRef = useRef(-1);
-  if (currentIdx >= 0) lastRegularIdxRef.current = currentIdx;
-  const upcomingIdx =
-    currentIdx >= 0 ? currentIdx + 1 : lastRegularIdxRef.current + 1;
-  const nextReel = REELS[upcomingIdx] ?? null;
+  const lastVotableIdxRef = useRef(-1);
+  const currentVotableIdx = state.reel_id
+    ? REELS.findIndex((r) => r.reel_id === state.reel_id)
+    : -1;
+  if (currentVotableIdx >= 0) lastVotableIdxRef.current = currentVotableIdx;
 
-  // nextReel is already buffered into the inactive video slot below; prefetch
-  // a few reels beyond it so Next-button jumps stay instant.
-  const prefetchUrls = useMemo(
-    () => REELS.slice(upcomingIdx + 1, upcomingIdx + 4).map((r) => r.file_path),
-    [upcomingIdx],
-  );
+  // The next thing the hall should preload, derived from the show order
+  // (all non-votable videos first, then all votable reels). During the
+  // loading interstitial the next real reel is the votable after the one
+  // we just played.
+  const nextItem = useMemo(() => {
+    if (!state.reel_id) return null;
+    if (state.reel_id === LOADING_ANIM.reel_id) {
+      const reel = REELS[lastVotableIdxRef.current + 1];
+      return reel
+        ? { reel_id: reel.reel_id, file_path: reel.file_path }
+        : null;
+    }
+    const next = showOrderNext(state.reel_id);
+    if (!next) return null;
+    return findPlayable(next.reel_id);
+  }, [state.reel_id]);
+
+  // Prefetch a few items beyond nextItem so navigation through the show
+  // order stays instant even if it crosses the non-votable / votable seam.
+  const prefetchUrls = useMemo(() => {
+    if (!nextItem) return [];
+    const urls: string[] = [];
+    let cur = nextItem.reel_id;
+    for (let i = 0; i < 3; i++) {
+      const n = showOrderNext(cur);
+      if (!n) break;
+      const p = findPlayable(n.reel_id);
+      if (p) urls.push(p.file_path);
+      cur = n.reel_id;
+    }
+    return urls;
+  }, [nextItem]);
 
   // Auto-advance: when the active video element fires `ended`, broadcast the
   // next state. A regular reel goes to the loading interstitial (voting stays
@@ -195,37 +221,67 @@ function LiveStage({
   useEffect(() => {
     endedFor.current = null;
   }, [state.reel_id]);
+  const advanceToVotable = (reelId: string) => {
+    sendPlayback({
+      reel_id: reelId,
+      status: "playing",
+      timestamp: Date.now(),
+      position: 0,
+    });
+    sendVoting({
+      reel_id: reelId,
+      status: "open",
+      opened_at: Date.now(),
+      closed_at: null,
+    });
+  };
+  const advanceToNonVotable = (reelId: string) => {
+    sendPlayback({
+      reel_id: reelId,
+      status: "playing",
+      timestamp: Date.now(),
+      position: 0,
+    });
+    sendVoting({
+      reel_id: null,
+      status: "idle",
+      opened_at: null,
+      closed_at: null,
+    });
+  };
   const handleEnded = () => {
     const id = state.reel_id;
     if (!id || endedFor.current === id) return;
     endedFor.current = id;
+
     if (id === LOADING_ANIM.reel_id) {
-      const next = lastRegularIdxRef.current + 1;
-      if (next < REELS.length) {
-        const nextReel = REELS[next];
-        sendPlayback({
-          reel_id: nextReel.reel_id,
-          status: "playing",
-          timestamp: Date.now(),
-          position: 0,
-        });
-        sendVoting({
-          reel_id: nextReel.reel_id,
-          status: "open",
-          opened_at: Date.now(),
-          closed_at: null,
-        });
-      }
-    } else {
-      const idx = REELS.findIndex((r) => r.reel_id === id);
-      if (idx >= 0 && idx < REELS.length - 1) {
-        sendPlayback({
-          reel_id: LOADING_ANIM.reel_id,
-          status: "playing",
-          timestamp: Date.now(),
-          position: 0,
-        });
-      }
+      // Loading anim is only used between votable reels.
+      const nextIdx = lastVotableIdxRef.current + 1;
+      if (nextIdx < REELS.length) advanceToVotable(REELS[nextIdx].reel_id);
+      return;
+    }
+
+    const isNonVotable = NON_VOTABLE_REELS.some((r) => r.reel_id === id);
+    if (isNonVotable) {
+      // Non-votable videos play straight into the next show-order item
+      // with no interstitial.
+      const next = showOrderNext(id);
+      if (!next) return;
+      if (next.isVotable) advanceToVotable(next.reel_id);
+      else advanceToNonVotable(next.reel_id);
+      return;
+    }
+
+    // A votable reel ended -> drop into the loading interstitial. Voting
+    // stays open for the just-finished reel through the 7s clip.
+    const idx = REELS.findIndex((r) => r.reel_id === id);
+    if (idx >= 0 && idx < REELS.length - 1) {
+      sendPlayback({
+        reel_id: LOADING_ANIM.reel_id,
+        status: "playing",
+        timestamp: Date.now(),
+        position: 0,
+      });
     }
   };
 
@@ -302,19 +358,19 @@ function LiveStage({
     // state.position + state.timestamp instead of recomputing every render.
   }, [reel, isPlaying, active, state.position, state.timestamp]);
 
-  // Preload the next reel into whichever slot is currently inactive so the
-  // upcoming swap is instant.
+  // Preload the next item (in show order) into whichever slot is currently
+  // inactive so the upcoming swap is instant.
   useEffect(() => {
-    if (!nextReel || !reel) return;
+    if (!nextItem || !reel) return;
     const inactive: Slot = active === "A" ? "B" : "A";
-    if (slotReel.current[inactive] === nextReel.reel_id) return;
+    if (slotReel.current[inactive] === nextItem.reel_id) return;
     if (slotReel.current[inactive] === reel.reel_id) return;
     const inactiveVideo = (inactive === "A" ? aRef : bRef).current;
     if (!inactiveVideo) return;
-    inactiveVideo.src = nextReel.file_path;
+    inactiveVideo.src = nextItem.file_path;
     inactiveVideo.load();
-    slotReel.current[inactive] = nextReel.reel_id;
-  }, [nextReel, active, reel]);
+    slotReel.current[inactive] = nextItem.reel_id;
+  }, [nextItem, active, reel]);
 
   if (!reel) return <HoldingSlate />;
 
