@@ -12,6 +12,11 @@ import {
 import { REELS, findReel, formatRuntime } from "@/lib/reels";
 import { NON_VOTABLE_REELS, type NonVotableReel } from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
+import {
+  CAUGHT_UP,
+  WINNER_FINAL_REELS,
+  type WinnerFinalReel,
+} from "@/lib/cast-content";
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_PASSWORD = "admin@stack";
@@ -175,12 +180,10 @@ function Panel() {
     });
   };
 
-  // Cast a non-votable video to the hall screen without opening voting.
-  const castNonVotable = (idx: number) => {
-    const reel = NON_VOTABLE_REELS[idx];
-    if (!reel) return;
+  // Cast any item to the hall screen without opening voting.
+  const castIdle = (reelId: string) => {
     sendPlayback({
-      reel_id: reel.reel_id,
+      reel_id: reelId,
       status: "playing",
       timestamp: Date.now(),
       position: 0,
@@ -191,6 +194,28 @@ function Panel() {
       opened_at: null,
       closed_at: null,
     });
+  };
+
+  const castNonVotable = (idx: number) => {
+    const reel = NON_VOTABLE_REELS[idx];
+    if (!reel) return;
+    castIdle(reel.reel_id);
+  };
+
+  const castCaughtUp = () => castIdle(CAUGHT_UP.reel_id);
+
+  const castWinnerFinal = (idx: number) => {
+    const reel = WINNER_FINAL_REELS[idx];
+    if (!reel) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Cast "${reel.title}" as the WINNER? It will loop on the hall screen until you cast something else.`,
+      )
+    ) {
+      return;
+    }
+    castIdle(reel.reel_id);
   };
 
   // Auto-advance lives on the hall page: it fires off the video element's
@@ -316,6 +341,15 @@ function Panel() {
         reels={NON_VOTABLE_REELS}
         castReelId={playback.reel_id}
         onCast={castNonVotable}
+      />
+      <CaughtUpLibrary
+        active={playback.reel_id === CAUGHT_UP.reel_id}
+        onCast={castCaughtUp}
+      />
+      <WinnerFinalLibrary
+        reels={WINNER_FINAL_REELS}
+        castReelId={playback.reel_id}
+        onCast={castWinnerFinal}
       />
       <VoterList
         reelId={voting.reel_id}
@@ -671,6 +705,109 @@ function NonVotableLibrary({
                   </div>
                   <div className="text-stone-500 text-xs truncate">
                     Cast only · not up for voting
+                  </div>
+                </div>
+                <button
+                  onClick={() => onCast(idx)}
+                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    isCast
+                      ? "bg-emerald-600 text-white"
+                      : "bg-stone-900 text-white hover:bg-stone-700"
+                  }`}
+                >
+                  {isCast ? "On screen" : "Cast"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// "You are all caught up" image. Casts to the hall and stays on screen.
+function CaughtUpLibrary({
+  active,
+  onCast,
+}: {
+  active: boolean;
+  onCast: () => void;
+}) {
+  return (
+    <section className="p-5 bg-stone-50 border-t border-stone-200">
+      <header className="mb-3 max-w-3xl mx-auto">
+        <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+          CAUGHT UP IMAGE
+        </h2>
+      </header>
+      <div className="bg-white border border-stone-300 max-w-3xl mx-auto">
+        <div
+          className={`grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-2.5 ${
+            active ? "bg-emerald-50" : ""
+          }`}
+        >
+          <div className="min-w-0">
+            <div className="font-semibold text-sm">You are all caught up</div>
+            <div className="text-stone-500 text-xs">
+              Image stays on screen until you cast something else
+            </div>
+          </div>
+          <button
+            onClick={onCast}
+            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+              active
+                ? "bg-emerald-600 text-white"
+                : "bg-stone-900 text-white hover:bg-stone-700"
+            }`}
+          >
+            {active ? "On screen" : "Cast"}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Winner reveal videos. Cast loops on the hall; click prompts a confirm.
+function WinnerFinalLibrary({
+  reels,
+  castReelId,
+  onCast,
+}: {
+  reels: readonly WinnerFinalReel[];
+  castReelId: string | null;
+  onCast: (idx: number) => void;
+}) {
+  return (
+    <section className="p-5 bg-stone-50 border-t border-stone-200">
+      <header className="mb-3 max-w-3xl mx-auto">
+        <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+          WINNER FINAL · {reels.length}
+        </h2>
+      </header>
+      {reels.length === 0 ? (
+        <p className="max-w-3xl mx-auto text-sm text-stone-500">
+          Drop video files in <code>public/winner-final/</code> and add them
+          to <code>src/lib/cast-content.ts</code> to populate this list.
+        </p>
+      ) : (
+        <div className="bg-white border border-stone-300 divide-y divide-stone-200 max-w-3xl mx-auto">
+          {reels.map((reel, idx) => {
+            const isCast = reel.reel_id === castReelId;
+            return (
+              <div
+                key={reel.reel_id}
+                className={`grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-2.5 ${
+                  isCast ? "bg-emerald-50" : ""
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm truncate">
+                    {reel.title}
+                  </div>
+                  <div className="text-stone-500 text-xs truncate">
+                    Loops on the hall · confirm before casting
                   </div>
                 </div>
                 <button

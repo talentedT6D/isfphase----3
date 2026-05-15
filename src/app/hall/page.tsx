@@ -15,6 +15,7 @@ import {
   showOrderNext,
 } from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
+import { CAUGHT_UP, LOOP_GRADIENT } from "@/lib/cast-content";
 
 type Slot = "A" | "B";
 
@@ -51,6 +52,10 @@ export default function HallPage() {
   // so playback can start cleanly when admin cues a reel.
   const [unlocked, setUnlocked] = useState(false);
   if (!unlocked) return <StartGate onStart={() => setUnlocked(true)} />;
+
+  // The "you are all caught up" image is a static asset — render it on its
+  // own and let it sit on screen until something else is cast.
+  if (state.reel_id === CAUGHT_UP.reel_id) return <CaughtUpStage />;
 
   if (!sessionStarted) return <PreShow />;
   // Once admin has cued a reel we keep the video on screen for every state —
@@ -98,6 +103,19 @@ function StartGate({ onStart }: { onStart: () => void }) {
       <div className="mt-8 text-white/70 text-sm tracking-[0.3em]">
         CLICK ANYWHERE TO START
       </div>
+    </div>
+  );
+}
+
+function CaughtUpStage() {
+  return (
+    <div className="fixed inset-0 bg-black flex items-center justify-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={CAUGHT_UP.image_path}
+        alt={CAUGHT_UP.title}
+        className="max-w-full max-h-full object-contain"
+      />
     </div>
   );
 }
@@ -249,8 +267,15 @@ function LiveStage({
 
     const isNonVotable = NON_VOTABLE_REELS.some((r) => r.reel_id === id);
     if (isNonVotable) {
-      // Non-votable videos do NOT auto-advance — the operator casts each
-      // one manually from the admin panel.
+      // After a non-votable plays, drop into the mood-gradient loop until
+      // the operator casts something else. Voting is already idle so we
+      // only need to broadcast the playback.
+      sendPlayback({
+        reel_id: LOOP_GRADIENT.reel_id,
+        status: "playing",
+        timestamp: Date.now(),
+        position: 0,
+      });
       return;
     }
 
@@ -365,6 +390,7 @@ function LiveStage({
         style={{ willChange: "transform" }}
         playsInline
         preload="auto"
+        loop={!!reel.loop}
         onEnded={handleEnded}
       />
       <video
@@ -373,6 +399,7 @@ function LiveStage({
         style={{ willChange: "transform" }}
         playsInline
         preload="auto"
+        loop={!!reel.loop}
         onEnded={handleEnded}
       />
     </div>
