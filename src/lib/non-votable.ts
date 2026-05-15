@@ -12,6 +12,11 @@ export interface NonVotableReel {
   file_path: string;
   title: string;
   runtime: number;
+  // When true, the hall auto-advances from this reel when it ends — into
+  // the next auto-advance non-votable in the list, or into the first
+  // shortlist reel if this is the last one. Defaults to false (one-time
+  // play, then stop on the last frame).
+  autoAdvance?: boolean;
 }
 
 export const NON_VOTABLE_REELS: readonly NonVotableReel[] =

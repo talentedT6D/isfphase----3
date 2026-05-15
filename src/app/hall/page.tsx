@@ -265,10 +265,40 @@ function LiveStage({
       return;
     }
 
-    const isNonVotable = NON_VOTABLE_REELS.some((r) => r.reel_id === id);
-    if (isNonVotable) {
-      // Non-votable videos do NOT auto-advance — the operator casts each
-      // one manually from the admin panel.
+    const nv = NON_VOTABLE_REELS.find((r) => r.reel_id === id);
+    if (nv) {
+      if (!nv.autoAdvance) {
+        // One-time play — stop on the last frame, operator casts the next
+        // thing manually.
+        return;
+      }
+      // Auto-advance: continue through the auto-advance non-votable group,
+      // then land on the first shortlist reel and open voting.
+      const idx = NON_VOTABLE_REELS.findIndex((r) => r.reel_id === id);
+      const nextNv = NON_VOTABLE_REELS.slice(idx + 1).find(
+        (r) => r.autoAdvance,
+      );
+      if (nextNv) {
+        sendPlayback({
+          reel_id: nextNv.reel_id,
+          status: "playing",
+          timestamp: Date.now(),
+          position: 0,
+        });
+      } else if (REELS[0]) {
+        sendPlayback({
+          reel_id: REELS[0].reel_id,
+          status: "playing",
+          timestamp: Date.now(),
+          position: 0,
+        });
+        sendVoting({
+          reel_id: REELS[0].reel_id,
+          status: "open",
+          opened_at: Date.now(),
+          closed_at: null,
+        });
+      }
       return;
     }
 

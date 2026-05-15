@@ -39,30 +39,35 @@
     "reel_id": "nv-010",
     "file_path": "/non-votable-videos/010.mp4",
     "title": "Malvika explainer video",
-    "runtime": 28
+    "runtime": 28,
+    "autoAdvance": true
   },
   {
     "reel_id": "nv-000",
     "file_path": "/non-votable-videos/000.mp4",
     "title": "Countdown for reel",
-    "runtime": 5
+    "runtime": 5,
+    "autoAdvance": true
   },
   {
     "reel_id": "nv-006",
     "file_path": "/non-votable-videos/006.mp4",
     "title": "CERTIFICATE BEFORE REELS",
-    "runtime": 12
+    "runtime": 12,
+    "autoAdvance": true
   },
   {
     "reel_id": "nv-007",
     "file_path": "/non-votable-videos/007.mp4",
     "title": "NANDU reel",
-    "runtime": 27
+    "runtime": 27,
+    "autoAdvance": true
   },
   {
     "reel_id": "nv-008",
     "file_path": "/non-votable-videos/008.mp4",
     "title": "SUKESH reel",
-    "runtime": 58
+    "runtime": 58,
+    "autoAdvance": true
   }
 ]
