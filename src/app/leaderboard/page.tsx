@@ -29,8 +29,9 @@ interface ReelResult {
   audienceRank: number | null;
   audienceCount: number;
   // (sum of all judge scores + audience avg) / (judge count + 1).
-  // Null until every judge has voted and the audience average exists.
-  total: number | null;
+  // Missing judge scores count as 0; audience avg falls back to 0 if no
+  // one has voted yet.
+  total: number;
 }
 
 const JUDGE_ID_SET = new Set(JUDGE_IDS);
@@ -153,12 +154,14 @@ function Results() {
           audienceVotes.length
         : null;
 
-      const allJudgesVoted = castJudgeScores.length === JUDGES.length;
+      // Missing judge votes count as 0 in the total. Audience falls back
+      // to 0 too if nobody has voted yet, so the total is always shown.
+      const judgeSumForTotal = judgeScores.reduce(
+        (acc, s) => acc + (s ?? 0),
+        0,
+      );
       const total =
-        allJudgesVoted && audienceAvg !== null
-          ? (castJudgeScores.reduce((a, b) => a + b, 0) + audienceAvg) /
-            (JUDGES.length + 1)
-          : null;
+        (judgeSumForTotal + (audienceAvg ?? 0)) / (JUDGES.length + 1);
 
       return {
         reel_id: reel.reel_id,
@@ -191,9 +194,7 @@ function Results() {
       });
 
     return rows.sort((a, b) => {
-      const ta = a.total ?? -1;
-      const tb = b.total ?? -1;
-      if (tb !== ta) return tb - ta;
+      if (b.total !== a.total) return b.total - a.total;
       const ja = a.judgeAvg ?? -1;
       const jb = b.judgeAvg ?? -1;
       if (jb !== ja) return jb - ja;
@@ -315,11 +316,7 @@ function Results() {
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums font-bold text-stone-900">
-                        {r.total === null ? (
-                          <span className="text-stone-300">—</span>
-                        ) : (
-                          r.total.toFixed(1)
-                        )}
+                        {r.total.toFixed(1)}
                       </td>
                     </tr>
                   ))}
@@ -330,7 +327,7 @@ function Results() {
 
           <p className="mt-3 text-[10px] text-stone-400 tracking-wider">
             Total = (sum of the {JUDGES.length} judge scores + audience avg) ÷{" "}
-            {JUDGES.length + 1}, shown once every judge has voted. Audience avg
+            {JUDGES.length + 1}. Missing judge votes count as 0. Audience avg
             also shows the number of audience votes. Updates live.
           </p>
         </div>
