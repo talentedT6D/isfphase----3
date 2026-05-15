@@ -5,6 +5,9 @@ import { supabase } from "@/lib/supabase";
 import { REELS } from "@/lib/reels";
 import { JUDGES, JUDGE_IDS } from "@/lib/judges";
 
+const LEADERBOARD_PASSWORD = "lead@stack";
+const LEADERBOARD_KEY = "isf-leaderboard-ok";
+
 interface RawVote {
   user_id: string;
   reel_id: string;
@@ -33,6 +36,68 @@ interface ReelResult {
 const JUDGE_ID_SET = new Set(JUDGE_IDS);
 
 export default function LeaderboardPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setAuthed(
+      typeof window !== "undefined" &&
+        window.localStorage.getItem(LEADERBOARD_KEY) === "1",
+    );
+  }, []);
+
+  if (authed === null) return null;
+  if (!authed) return <GateView onUnlock={() => setAuthed(true)} />;
+  return <Results />;
+}
+
+function GateView({ onUnlock }: { onUnlock: () => void }) {
+  const [pw, setPw] = useState("");
+  const [err, setErr] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw === LEADERBOARD_PASSWORD) {
+      window.localStorage.setItem(LEADERBOARD_KEY, "1");
+      onUnlock();
+    } else {
+      setErr("Wrong password");
+    }
+  };
+  return (
+    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4 font-mono">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm bg-white border border-stone-300 p-6"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="ISF" className="h-10 w-auto mb-4" />
+        <div className="text-[10px] tracking-[0.3em] text-stone-500 mb-2">
+          RESULTS
+        </div>
+        <h1 className="text-lg font-semibold text-stone-900 mb-4">Unlock</h1>
+        <input
+          type="password"
+          value={pw}
+          onChange={(e) => {
+            setPw(e.target.value);
+            setErr("");
+          }}
+          autoFocus
+          placeholder="Password"
+          className="w-full border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:border-stone-900"
+        />
+        {err && <p className="text-red-600 text-xs mt-2">{err}</p>}
+        <button
+          type="submit"
+          className="w-full mt-4 py-2 bg-stone-900 text-white text-sm"
+        >
+          Enter
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Results() {
   const [votes, setVotes] = useState<RawVote[]>([]);
   const [loaded, setLoaded] = useState(false);
 
