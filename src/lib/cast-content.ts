@@ -1,20 +1,10 @@
 // Cast-only content that runs on the hall screen but is never up for voting.
-// Three flavours beyond the regular non-votable videos:
+// Two flavours beyond the regular non-votable videos:
 //
-//   - LOOP_GRADIENT — auto-loops after every non-votable video until the
-//     operator casts something else.
 //   - WINNER_FINAL_REELS — winner reveals; loop on screen, cast from admin
 //     behind a confirmation prompt.
 //   - CAUGHT_UP — a static image, stays on the hall until something else
 //     is cast.
-
-export const LOOP_GRADIENT = {
-  reel_id: "__loop_gradient__",
-  file_path: "/loop-this/Mood%20gradient.mp4",
-  title: "Mood gradient (loop)",
-  runtime: 21,
-  loop: true,
-} as const;
 
 import winnerManifest from "./winner-final.json";
 

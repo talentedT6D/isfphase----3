@@ -1,7 +1,7 @@
 import manifest from "./non-votable.json";
 import { REELS } from "./reels";
 import { LOADING_ANIM } from "./loading-anim";
-import { CAUGHT_UP, LOOP_GRADIENT, WINNER_FINAL_REELS } from "./cast-content";
+import { CAUGHT_UP, WINNER_FINAL_REELS } from "./cast-content";
 
 // Videos that get cast to the hall screen but are NOT open for voting.
 // Drop the file in public/non-votable-videos/ and add an entry here. While
@@ -25,11 +25,10 @@ export function findNonVotableReel(
 }
 
 // True for anything cast to the hall that should leave the audience on the
-// "This video is not an entry" screen — the regular non-votable videos
-// plus the mood gradient loop, the caught-up image, and winner-final clips.
+// "This video is not an entry" screen — the non-votable videos plus the
+// caught-up image and winner-final clips.
 export function isCastOnly(reelId: string | null | undefined): boolean {
   if (!reelId) return false;
-  if (reelId === LOOP_GRADIENT.reel_id) return true;
   if (reelId === CAUGHT_UP.reel_id) return true;
   if (WINNER_FINAL_REELS.some((r) => r.reel_id === reelId)) return true;
   return NON_VOTABLE_REELS.some((r) => r.reel_id === reelId);
@@ -49,7 +48,6 @@ export function findPlayable(
 ): PlayableInfo | null {
   if (!reelId) return null;
   if (reelId === LOADING_ANIM.reel_id) return LOADING_ANIM;
-  if (reelId === LOOP_GRADIENT.reel_id) return LOOP_GRADIENT;
   const wf = WINNER_FINAL_REELS.find((r) => r.reel_id === reelId);
   if (wf) return { ...wf, loop: true };
   return (

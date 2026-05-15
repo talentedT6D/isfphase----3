@@ -15,7 +15,7 @@ import {
   showOrderNext,
 } from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
-import { CAUGHT_UP, LOOP_GRADIENT } from "@/lib/cast-content";
+import { CAUGHT_UP } from "@/lib/cast-content";
 
 type Slot = "A" | "B";
 
@@ -267,15 +267,8 @@ function LiveStage({
 
     const isNonVotable = NON_VOTABLE_REELS.some((r) => r.reel_id === id);
     if (isNonVotable) {
-      // After a non-votable plays, drop into the mood-gradient loop until
-      // the operator casts something else. Voting is already idle so we
-      // only need to broadcast the playback.
-      sendPlayback({
-        reel_id: LOOP_GRADIENT.reel_id,
-        status: "playing",
-        timestamp: Date.now(),
-        position: 0,
-      });
+      // Non-votable videos do NOT auto-advance — the operator casts each
+      // one manually from the admin panel.
       return;
     }
 
