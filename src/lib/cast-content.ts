@@ -16,6 +16,8 @@ export const LOOP_GRADIENT = {
   loop: true,
 } as const;
 
+import winnerManifest from "./winner-final.json";
+
 export interface WinnerFinalReel {
   reel_id: string;
   file_path: string;
@@ -23,15 +25,10 @@ export interface WinnerFinalReel {
   runtime: number;
 }
 
-// Drop more videos in public/winner-final/ and append entries here.
-export const WINNER_FINAL_REELS: readonly WinnerFinalReel[] = [
-  {
-    reel_id: "wf-001",
-    file_path: "/winner-final/001.mp4",
-    title: "Winner 001",
-    runtime: 5,
-  },
-];
+// Drop more videos in public/winner-final/ and re-run the gen script to
+// repopulate src/lib/winner-final.json.
+export const WINNER_FINAL_REELS: readonly WinnerFinalReel[] =
+  winnerManifest as WinnerFinalReel[];
 
 export const CAUGHT_UP = {
   reel_id: "__caught_up__",
