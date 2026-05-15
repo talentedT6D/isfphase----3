@@ -156,7 +156,7 @@ function Results() {
 
       // Missing judge votes count as 0 in the total. Audience falls back
       // to 0 too if nobody has voted yet, so the total is always shown.
-      const judgeSumForTotal = judgeScores.reduce(
+      const judgeSumForTotal = judgeScores.reduce<number>(
         (acc, s) => acc + (s ?? 0),
         0,
       );
