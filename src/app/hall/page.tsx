@@ -11,6 +11,7 @@ import {
 import { REELS } from "@/lib/reels";
 import {
   NON_VOTABLE_REELS,
+  ORANGE_FILLER,
   findPlayable,
   showOrderNext,
 } from "@/lib/non-votable";
@@ -120,18 +121,17 @@ function CaughtUpStage() {
   );
 }
 
-// Muted, looping clip of the first reel so the hall isn't sitting on a dark
-// slate while the venue is still filling in.
+// Looping muted clip of the orange filler so the hall isn't sitting on a
+// dark slate while the venue is still filling in.
 function PreShow() {
-  const first = REELS[0];
-  if (!first) return <HoldingSlate />;
+  if (!ORANGE_FILLER) return <HoldingSlate />;
   return (
     <div className="fixed inset-0 bg-black">
-      {/* Warm the cache for the reels that come right after the opener. */}
-      <PrefetchReels urls={REELS.slice(1, 4).map((r) => r.file_path)} />
+      {/* Warm the cache for the first few reels of the show. */}
+      <PrefetchReels urls={REELS.slice(0, 3).map((r) => r.file_path)} />
       <video
-        className="absolute inset-0 w-full h-full object-contain"
-        src={first.file_path}
+        className="absolute inset-0 w-full h-full object-cover"
+        src={ORANGE_FILLER.file_path}
         autoPlay
         muted
         loop
@@ -400,14 +400,25 @@ function LiveStage({
 }
 
 function HoldingSlate() {
+  if (ORANGE_FILLER) {
+    return (
+      <div className="fixed inset-0 bg-black">
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          src={ORANGE_FILLER.file_path}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+        />
+      </div>
+    );
+  }
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo.png"
-        alt="ISF"
-        className="h-32 w-auto"
-      />
+      <img src="/logo.png" alt="ISF" className="h-32 w-auto" />
       <div className="mt-6 text-white/50 text-sm tracking-[0.3em]">
         BANGALORE INTERNATIONAL CENTRE · 16 MAY 2026
       </div>

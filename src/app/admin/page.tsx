@@ -10,7 +10,11 @@ import {
   type VotingState,
 } from "@/lib/channels";
 import { REELS, findReel, formatRuntime } from "@/lib/reels";
-import { NON_VOTABLE_REELS, type NonVotableReel } from "@/lib/non-votable";
+import {
+  NON_VOTABLE_REELS,
+  ORANGE_FILLER,
+  type NonVotableReel,
+} from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
 import {
   CAUGHT_UP,
@@ -204,6 +208,13 @@ function Panel() {
 
   const castCaughtUp = () => castIdle(CAUGHT_UP.reel_id);
 
+  // Quick "pin the orange filler to the hall" action — same effect as
+  // casting the Orange filler screen from the non-votable list but
+  // accessible from the always-visible top bar.
+  const pinOrange = () => {
+    if (ORANGE_FILLER) castIdle(ORANGE_FILLER.reel_id);
+  };
+
   const castWinnerFinal = (idx: number) => {
     const reel = WINNER_FINAL_REELS[idx];
     if (!reel) return;
@@ -313,7 +324,14 @@ function Panel() {
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-mono">
-      <TopBar playback={playback} voting={voting} />
+      <TopBar
+        playback={playback}
+        voting={voting}
+        onPinOrange={pinOrange}
+        orangePinned={
+          !!ORANGE_FILLER && playback.reel_id === ORANGE_FILLER.reel_id
+        }
+      />
       <NowShowing
         reel={playbackReel}
         next={nextReel}
@@ -362,9 +380,13 @@ function Panel() {
 function TopBar({
   playback,
   voting,
+  onPinOrange,
+  orangePinned,
 }: {
   playback: PlaybackState;
   voting: VotingState;
+  onPinOrange: () => void;
+  orangePinned: boolean;
 }) {
   const logout = () => {
     window.localStorage.removeItem(ADMIN_KEY);
@@ -388,6 +410,17 @@ function TopBar({
         </Pill>
       </div>
       <div className="flex items-center gap-3">
+        <button
+          onClick={onPinOrange}
+          className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-opacity hover:opacity-90 active:scale-95"
+          style={{
+            backgroundColor: "#FF7A00",
+            color: orangePinned ? "#fff" : "#1c1917",
+            boxShadow: orangePinned ? "0 0 0 2px #1c1917" : "none",
+          }}
+        >
+          {orangePinned ? "Orange Pinned" : "Pin Orange"}
+        </button>
         <a
           href="/leaderboard"
           target="_blank"

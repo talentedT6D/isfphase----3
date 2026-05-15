@@ -17,6 +17,14 @@ export interface NonVotableReel {
 export const NON_VOTABLE_REELS: readonly NonVotableReel[] =
   manifest as NonVotableReel[];
 
+// The orange filler clip is the new "blank" state for the hall — it plays
+// muted/looping whenever nothing else is cued and is one-click castable
+// from admin's Pin Orange button.
+export const ORANGE_FILLER: NonVotableReel | null =
+  NON_VOTABLE_REELS.find((r) => r.title === "Orange filler screen") ??
+  NON_VOTABLE_REELS.find((r) => r.reel_id === "nv-009") ??
+  null;
+
 export function findNonVotableReel(
   reelId: string | null | undefined,
 ): NonVotableReel | null {
