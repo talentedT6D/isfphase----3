@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePlaybackSubscriber, useVotingSubscriber } from "@/lib/channels";
 import { findVoterReel } from "@/lib/reels";
-import { findNonVotableReel } from "@/lib/non-votable";
+import { isCastOnly } from "@/lib/non-votable";
 
 export type Reaction = "LOL" | "FIRE" | "DEAD" | "KISS";
 
@@ -61,7 +61,7 @@ export function VotingExperience({
   const voting = useVotingSubscriber();
   const playback = usePlaybackSubscriber();
   const currentReel = findVoterReel(voting.reel_id);
-  const nonVotableReel = findNonVotableReel(playback.reel_id);
+  const castOnly = isCastOnly(playback.reel_id);
   const alreadyVoted = useMemo(
     () => myVotes.some((v) => v.reel_id === voting.reel_id),
     [myVotes, voting.reel_id],
@@ -93,7 +93,7 @@ export function VotingExperience({
         />
       );
     }
-  } else if (nonVotableReel && playback.status !== "stopped") {
+  } else if (castOnly && playback.status !== "stopped") {
     body = <NonVotableView />;
   } else {
     body = <WaitingView totalVoted={myVotes.length} />;

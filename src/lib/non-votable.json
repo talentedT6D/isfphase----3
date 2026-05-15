@@ -1,5 +1,11 @@
 [
   {
+    "reel_id": "nv-000",
+    "file_path": "/non-votable-videos/000.mp4",
+    "title": "Non-votable 000",
+    "runtime": 5
+  },
+  {
     "reel_id": "nv-001",
     "file_path": "/non-votable-videos/001.mp4",
     "title": "Non-votable 001",
