@@ -348,17 +348,20 @@ function Panel() {
         onReopenPrevVoting={reopenPrevVoting}
         canReopenPrev={canReopenPrev}
       />
+      {/* Sections are laid out in run-of-show order: pre-show non-votable
+          assets, then the shortlist (votable), then the caught-up image,
+          then the winner reveal clips. */}
+      <NonVotableLibrary
+        reels={NON_VOTABLE_REELS}
+        castReelId={playback.reel_id}
+        onCast={castNonVotable}
+      />
       <Library
         query={query}
         onQueryChange={setQuery}
         reels={filtered}
         playbackReelId={playbackReel?.reel_id ?? null}
         onPlay={playReel}
-      />
-      <NonVotableLibrary
-        reels={NON_VOTABLE_REELS}
-        castReelId={playback.reel_id}
-        onCast={castNonVotable}
       />
       <CaughtUpLibrary
         active={playback.reel_id === CAUGHT_UP.reel_id}
