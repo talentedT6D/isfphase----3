@@ -35,6 +35,14 @@ const REQUEST_EVENT = "request_state";
 const PLAYBACK_KEY = "playback";
 const VOTING_KEY = "voting";
 
+// Separate channels + DB keys for the winner-screen system (/win-hall +
+// /win-admin). Keeping them isolated means the winner playback doesn't
+// touch the festival playback the audience is watching on /hall.
+const WIN_PLAYBACK_CHANNEL = "win-playback";
+const WIN_VOTING_CHANNEL = "win-voting";
+const WIN_PLAYBACK_KEY = "win-playback";
+const WIN_VOTING_KEY = "win-voting";
+
 export const INITIAL_PLAYBACK: PlaybackState = {
   reel_id: null,
   status: "stopped",
@@ -258,6 +266,58 @@ export function useVotingBroadcaster(initial: VotingState = INITIAL_VOTING) {
   return useSyncedBroadcaster<VotingState>(
     VOTING_CHANNEL,
     VOTING_KEY,
+    initial,
+  );
+}
+
+// --- Winner-screen channels ---------------------------------------------
+// Same hooks as above but pointed at the WIN_* channels and DB keys so the
+// /win-admin + /win-hall pair operates entirely independently of the main
+// /admin + /hall + voter system.
+
+export function useWinPlaybackSubscriber() {
+  return useSyncedState<PlaybackState>(
+    WIN_PLAYBACK_CHANNEL,
+    WIN_PLAYBACK_KEY,
+    INITIAL_PLAYBACK,
+  );
+}
+
+export function useWinVotingSubscriber() {
+  return useSyncedState<VotingState>(
+    WIN_VOTING_CHANNEL,
+    WIN_VOTING_KEY,
+    INITIAL_VOTING,
+  );
+}
+
+export function useWinPlaybackPublisher() {
+  return useSyncedPublisher<PlaybackState>(
+    WIN_PLAYBACK_CHANNEL,
+    WIN_PLAYBACK_KEY,
+  );
+}
+
+export function useWinVotingPublisher() {
+  return useSyncedPublisher<VotingState>(WIN_VOTING_CHANNEL, WIN_VOTING_KEY);
+}
+
+export function useWinPlaybackBroadcaster(
+  initial: PlaybackState = INITIAL_PLAYBACK,
+) {
+  return useSyncedBroadcaster<PlaybackState>(
+    WIN_PLAYBACK_CHANNEL,
+    WIN_PLAYBACK_KEY,
+    initial,
+  );
+}
+
+export function useWinVotingBroadcaster(
+  initial: VotingState = INITIAL_VOTING,
+) {
+  return useSyncedBroadcaster<VotingState>(
+    WIN_VOTING_CHANNEL,
+    WIN_VOTING_KEY,
     initial,
   );
 }
