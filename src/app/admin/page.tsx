@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   INITIAL_PLAYBACK,
   INITIAL_VOTING,
@@ -174,56 +174,10 @@ function Panel() {
     });
   };
 
-  // Cast the loading interstitial between reels. We deliberately do NOT
-  // touch the voting state — voting stays open for the reel that just
-  // finished, giving voters the interstitial's full runtime as extra time
-  // to submit a score before the next reel starts.
-  const playInterstitial = () => {
-    sendPlayback({
-      reel_id: LOADING_ANIM.reel_id,
-      status: "playing",
-      timestamp: Date.now(),
-      position: 0,
-    });
-  };
-
-  // Remember the last regular reel we played so we know what comes after
-  // the interstitial.
-  const lastReelIdxRef = useRef(-1);
-  useEffect(() => {
-    if (!playback.reel_id || playback.reel_id === LOADING_ANIM.reel_id) return;
-    const idx = REELS.findIndex((r) => r.reel_id === playback.reel_id);
-    if (idx >= 0) lastReelIdxRef.current = idx;
-  }, [playback.reel_id]);
-
-  // Auto-advance: when a reel reaches its end, drop into the loading
-  // interstitial; when the interstitial reaches its end, start the next
-  // reel. Fires once per playing item via the autoAdvancedFor guard.
-  const autoAdvancedFor = useRef<string | null>(null);
-  useEffect(() => {
-    autoAdvancedFor.current = null;
-  }, [playback.reel_id]);
-  useEffect(() => {
-    if (playback.status !== "playing" || !playback.reel_id) return;
-    const id = playback.reel_id;
-    const runtime =
-      id === LOADING_ANIM.reel_id
-        ? LOADING_ANIM.runtime
-        : REELS.find((r) => r.reel_id === id)?.runtime;
-    if (!runtime) return;
-    if (estimated < runtime - 0.3) return;
-    if (autoAdvancedFor.current === id) return;
-    autoAdvancedFor.current = id;
-    if (id === LOADING_ANIM.reel_id) {
-      const next = lastReelIdxRef.current + 1;
-      if (next < REELS.length) playReel(next);
-    } else {
-      const idx = REELS.findIndex((r) => r.reel_id === id);
-      if (idx >= 0 && idx < REELS.length - 1) {
-        playInterstitial();
-      }
-    }
-  }, [estimated, playback.status, playback.reel_id]);
+  // Auto-advance lives on the hall page: it fires off the video element's
+  // actual `ended` event, which is more accurate than running it off a
+  // clock here (the manifest's Duration is rounded to whole seconds, so a
+  // clock-based trigger would cut reels off ~1 second early).
 
   const onPlayPause = () => {
     if (!playbackReel) {
