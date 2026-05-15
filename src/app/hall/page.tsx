@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  usePlaybackPublisher,
   usePlaybackSubscriber,
+  useVotingPublisher,
   type PlaybackState,
+  type VotingState,
 } from "@/lib/channels";
 import { REELS } from "@/lib/reels";
 import { findPlayable } from "@/lib/non-votable";
@@ -28,6 +31,8 @@ function whenPlayable(video: HTMLVideoElement, cb: () => void): () => void {
 
 export default function HallPage() {
   const state = usePlaybackSubscriber();
+  const sendPlayback = usePlaybackPublisher();
+  const sendVoting = useVotingPublisher();
 
   // Once admin has broadcast anything (timestamp > 0), we leave pre-show for
   // good. The flag is sticky so an admin reload doesn't bounce hall back to
@@ -48,7 +53,13 @@ export default function HallPage() {
   // playing, paused, or stopped. The holding slate only ever shows in the
   // very-initial pre-show / no-reel-yet case (handled by LiveStage when
   // state.reel_id is null).
-  return <LiveStage state={state} />;
+  return (
+    <LiveStage
+      state={state}
+      sendPlayback={sendPlayback}
+      sendVoting={sendVoting}
+    />
+  );
 }
 
 // One-time gate so the operator has clicked the hall page before any video
@@ -121,7 +132,15 @@ function PrefetchReels({ urls }: { urls: string[] }) {
   );
 }
 
-function LiveStage({ state }: { state: PlaybackState }) {
+function LiveStage({
+  state,
+  sendPlayback,
+  sendVoting,
+}: {
+  state: PlaybackState;
+  sendPlayback: (s: PlaybackState) => void;
+  sendVoting: (s: VotingState) => void;
+}) {
   const reel = findPlayable(state.reel_id);
   const isPlaying = state.status === "playing";
   // Where admin says we should be in the reel right now. We compute this on
@@ -167,6 +186,48 @@ function LiveStage({ state }: { state: PlaybackState }) {
     () => REELS.slice(upcomingIdx + 1, upcomingIdx + 4).map((r) => r.file_path),
     [upcomingIdx],
   );
+
+  // Auto-advance: when the active video element fires `ended`, broadcast the
+  // next state. A regular reel goes to the loading interstitial (voting stays
+  // open); the interstitial goes to the next reel and re-opens voting.
+  // Guarded so a single end event only fires once per reel.
+  const endedFor = useRef<string | null>(null);
+  useEffect(() => {
+    endedFor.current = null;
+  }, [state.reel_id]);
+  const handleEnded = () => {
+    const id = state.reel_id;
+    if (!id || endedFor.current === id) return;
+    endedFor.current = id;
+    if (id === LOADING_ANIM.reel_id) {
+      const next = lastRegularIdxRef.current + 1;
+      if (next < REELS.length) {
+        const nextReel = REELS[next];
+        sendPlayback({
+          reel_id: nextReel.reel_id,
+          status: "playing",
+          timestamp: Date.now(),
+          position: 0,
+        });
+        sendVoting({
+          reel_id: nextReel.reel_id,
+          status: "open",
+          opened_at: Date.now(),
+          closed_at: null,
+        });
+      }
+    } else {
+      const idx = REELS.findIndex((r) => r.reel_id === id);
+      if (idx >= 0 && idx < REELS.length - 1) {
+        sendPlayback({
+          reel_id: LOADING_ANIM.reel_id,
+          status: "playing",
+          timestamp: Date.now(),
+          position: 0,
+        });
+      }
+    }
+  };
 
   // Drive the active slot to show the current reel. Transitions slide the new
   // reel up from below (Instagram-reel style) while the outgoing reel slides
@@ -266,6 +327,7 @@ function LiveStage({ state }: { state: PlaybackState }) {
         style={{ willChange: "transform" }}
         playsInline
         preload="auto"
+        onEnded={handleEnded}
       />
       <video
         ref={bRef}
@@ -273,6 +335,7 @@ function LiveStage({ state }: { state: PlaybackState }) {
         style={{ willChange: "transform" }}
         playsInline
         preload="auto"
+        onEnded={handleEnded}
       />
     </div>
   );

@@ -143,6 +143,45 @@ export function useVotingSubscriber() {
   );
 }
 
+// Publisher hook: send state on this channel without claiming authority over
+// it (no REQUEST_EVENT response). Anyone using a broadcaster or subscriber
+// on the same channel will pick it up via STATE_EVENT and/or postgres_changes.
+function useSyncedPublisher<T>(
+  channelName: string,
+  key: string,
+): (state: T) => void {
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  useEffect(() => {
+    const ch = supabase.channel(channelName, {
+      config: { broadcast: { self: true, ack: false } },
+    });
+    ch.subscribe();
+    channelRef.current = ch;
+    return () => {
+      supabase.removeChannel(ch);
+      channelRef.current = null;
+    };
+  }, [channelName]);
+
+  return (state: T) => {
+    channelRef.current?.send({
+      type: "broadcast",
+      event: STATE_EVENT,
+      payload: state,
+    });
+    void persistState(key, state);
+  };
+}
+
+export function usePlaybackPublisher() {
+  return useSyncedPublisher<PlaybackState>(PLAYBACK_CHANNEL, PLAYBACK_KEY);
+}
+
+export function useVotingPublisher() {
+  return useSyncedPublisher<VotingState>(VOTING_CHANNEL, VOTING_KEY);
+}
+
 // Broadcaster hook. Owns the canonical state: writes it to the DB and emits
 // it over the broadcast channel. Also rehydrates from the DB on mount, so
 // an admin reload doesn't reset the show to "stopped".
@@ -174,6 +213,12 @@ function useSyncedBroadcaster<T>(
         event: STATE_EVENT,
         payload: stateRef.current,
       });
+    });
+    // Also accept state updates from other broadcasters (e.g. the hall page
+    // auto-advancing on `ended`), so this tab stays in sync.
+    ch.on("broadcast", { event: STATE_EVENT }, ({ payload }) => {
+      stateRef.current = payload as T;
+      setStateInternal(payload as T);
     });
     ch.subscribe();
     channelRef.current = ch;
