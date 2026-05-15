@@ -174,21 +174,16 @@ function Panel() {
     });
   };
 
-  // Cast the loading interstitial between reels. Voting is held closed while
-  // it plays; the auto-advance effect below moves on to the next reel when
-  // it ends.
+  // Cast the loading interstitial between reels. We deliberately do NOT
+  // touch the voting state — voting stays open for the reel that just
+  // finished, giving voters the interstitial's full runtime as extra time
+  // to submit a score before the next reel starts.
   const playInterstitial = () => {
     sendPlayback({
       reel_id: LOADING_ANIM.reel_id,
       status: "playing",
       timestamp: Date.now(),
       position: 0,
-    });
-    sendVoting({
-      reel_id: null,
-      status: "idle",
-      opened_at: null,
-      closed_at: null,
     });
   };
 
