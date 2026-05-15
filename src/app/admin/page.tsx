@@ -200,14 +200,7 @@ function Panel() {
 
   const onPlayPause = () => {
     if (!playbackReel) {
-      // Show starts with the first non-votable; the hall auto-advances
-      // through the rest of the non-votable set and then through every
-      // votable reel.
-      if (NON_VOTABLE_REELS.length > 0) {
-        castNonVotable(0);
-      } else {
-        playReel(0);
-      }
+      playReel(0);
       return;
     }
     sendPlayback({

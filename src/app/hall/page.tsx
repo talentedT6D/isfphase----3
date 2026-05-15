@@ -235,20 +235,6 @@ function LiveStage({
       closed_at: null,
     });
   };
-  const advanceToNonVotable = (reelId: string) => {
-    sendPlayback({
-      reel_id: reelId,
-      status: "playing",
-      timestamp: Date.now(),
-      position: 0,
-    });
-    sendVoting({
-      reel_id: null,
-      status: "idle",
-      opened_at: null,
-      closed_at: null,
-    });
-  };
   const handleEnded = () => {
     const id = state.reel_id;
     if (!id || endedFor.current === id) return;
@@ -263,12 +249,8 @@ function LiveStage({
 
     const isNonVotable = NON_VOTABLE_REELS.some((r) => r.reel_id === id);
     if (isNonVotable) {
-      // Non-votable videos play straight into the next show-order item
-      // with no interstitial.
-      const next = showOrderNext(id);
-      if (!next) return;
-      if (next.isVotable) advanceToVotable(next.reel_id);
-      else advanceToNonVotable(next.reel_id);
+      // Non-votable videos do NOT auto-advance — the operator casts each
+      // one manually from the admin panel.
       return;
     }
 
