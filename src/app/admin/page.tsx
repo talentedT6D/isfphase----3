@@ -14,7 +14,7 @@ import { NON_VOTABLE_REELS, type NonVotableReel } from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
 import { supabase } from "@/lib/supabase";
 
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_PASSWORD = "admin@stack";
 const ADMIN_KEY = "isf-admin-ok";
 
 export default function AdminPage() {
