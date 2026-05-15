@@ -109,16 +109,20 @@ function LiveStage({ state }: { state: PlaybackState }) {
   const currentIdx = reel
     ? REELS.findIndex((r) => r.reel_id === reel.reel_id)
     : -1;
-  const nextReel = currentIdx >= 0 ? REELS[currentIdx + 1] ?? null : null;
+
+  // Remember the index of the last *regular* reel we were on, so during the
+  // interstitial loading clip we can still preload the next real reel.
+  const lastRegularIdxRef = useRef(-1);
+  if (currentIdx >= 0) lastRegularIdxRef.current = currentIdx;
+  const upcomingIdx =
+    currentIdx >= 0 ? currentIdx + 1 : lastRegularIdxRef.current + 1;
+  const nextReel = REELS[upcomingIdx] ?? null;
 
   // nextReel is already buffered into the inactive video slot below; prefetch
   // a few reels beyond it so Next-button jumps stay instant.
   const prefetchUrls = useMemo(
-    () =>
-      currentIdx >= 0
-        ? REELS.slice(currentIdx + 2, currentIdx + 5).map((r) => r.file_path)
-        : [],
-    [currentIdx],
+    () => REELS.slice(upcomingIdx + 1, upcomingIdx + 4).map((r) => r.file_path),
+    [upcomingIdx],
   );
 
   // Drive the active slot to show the current reel. Transitions slide the new

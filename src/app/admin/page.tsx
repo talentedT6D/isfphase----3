@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   INITIAL_PLAYBACK,
   INITIAL_VOTING,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/channels";
 import { REELS, findReel, formatRuntime } from "@/lib/reels";
 import { NON_VOTABLE_REELS, type NonVotableReel } from "@/lib/non-votable";
+import { LOADING_ANIM } from "@/lib/loading-anim";
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_PASSWORD = "admin123";
@@ -123,12 +124,16 @@ function Panel() {
   const [estimated, setEstimated] = useState(playback.position);
   useEffect(() => {
     setEstimated(playback.position);
-    if (playback.status !== "playing" || !playbackReel) return;
+    if (playback.status !== "playing") return;
+    const runtime =
+      playbackReel?.runtime ??
+      (playback.reel_id === LOADING_ANIM.reel_id
+        ? LOADING_ANIM.runtime
+        : null);
+    if (!runtime) return;
     const id = window.setInterval(() => {
       const elapsed = (Date.now() - playback.timestamp) / 1000;
-      setEstimated(
-        Math.min(playback.position + elapsed, playbackReel.runtime),
-      );
+      setEstimated(Math.min(playback.position + elapsed, runtime));
     }, 250);
     return () => window.clearInterval(id);
   }, [playback, playbackReel]);
@@ -168,6 +173,62 @@ function Panel() {
       closed_at: null,
     });
   };
+
+  // Cast the loading interstitial between reels. Voting is held closed while
+  // it plays; the auto-advance effect below moves on to the next reel when
+  // it ends.
+  const playInterstitial = () => {
+    sendPlayback({
+      reel_id: LOADING_ANIM.reel_id,
+      status: "playing",
+      timestamp: Date.now(),
+      position: 0,
+    });
+    sendVoting({
+      reel_id: null,
+      status: "idle",
+      opened_at: null,
+      closed_at: null,
+    });
+  };
+
+  // Remember the last regular reel we played so we know what comes after
+  // the interstitial.
+  const lastReelIdxRef = useRef(-1);
+  useEffect(() => {
+    if (!playback.reel_id || playback.reel_id === LOADING_ANIM.reel_id) return;
+    const idx = REELS.findIndex((r) => r.reel_id === playback.reel_id);
+    if (idx >= 0) lastReelIdxRef.current = idx;
+  }, [playback.reel_id]);
+
+  // Auto-advance: when a reel reaches its end, drop into the loading
+  // interstitial; when the interstitial reaches its end, start the next
+  // reel. Fires once per playing item via the autoAdvancedFor guard.
+  const autoAdvancedFor = useRef<string | null>(null);
+  useEffect(() => {
+    autoAdvancedFor.current = null;
+  }, [playback.reel_id]);
+  useEffect(() => {
+    if (playback.status !== "playing" || !playback.reel_id) return;
+    const id = playback.reel_id;
+    const runtime =
+      id === LOADING_ANIM.reel_id
+        ? LOADING_ANIM.runtime
+        : REELS.find((r) => r.reel_id === id)?.runtime;
+    if (!runtime) return;
+    if (estimated < runtime - 0.3) return;
+    if (autoAdvancedFor.current === id) return;
+    autoAdvancedFor.current = id;
+    if (id === LOADING_ANIM.reel_id) {
+      const next = lastReelIdxRef.current + 1;
+      if (next < REELS.length) playReel(next);
+    } else {
+      const idx = REELS.findIndex((r) => r.reel_id === id);
+      if (idx >= 0 && idx < REELS.length - 1) {
+        playInterstitial();
+      }
+    }
+  }, [estimated, playback.status, playback.reel_id]);
 
   const onPlayPause = () => {
     if (!playbackReel) {

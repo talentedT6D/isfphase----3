@@ -1,5 +1,6 @@
 import manifest from "./non-votable.json";
 import { REELS } from "./reels";
+import { LOADING_ANIM } from "./loading-anim";
 
 // Videos that get cast to the hall screen but are NOT open for voting.
 //
@@ -29,6 +30,7 @@ export function findPlayable(
   reelId: string | null | undefined,
 ): { reel_id: string; file_path: string } | null {
   if (!reelId) return null;
+  if (reelId === LOADING_ANIM.reel_id) return LOADING_ANIM;
   return (
     REELS.find((r) => r.reel_id === reelId) ??
     NON_VOTABLE_REELS.find((r) => r.reel_id === reelId) ??
