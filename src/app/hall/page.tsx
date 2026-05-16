@@ -16,7 +16,7 @@ import {
   showOrderNext,
 } from "@/lib/non-votable";
 import { LOADING_ANIM } from "@/lib/loading-anim";
-import { CAUGHT_UP } from "@/lib/cast-content";
+import { CAUGHT_UP, WIFI_IMAGE } from "@/lib/cast-content";
 
 type Slot = "A" | "B";
 
@@ -57,6 +57,11 @@ export default function HallPage() {
   // The "you are all caught up" image is a static asset — render it on its
   // own and let it sit on screen until something else is cast.
   if (state.reel_id === CAUGHT_UP.reel_id) return <CaughtUpStage />;
+  // Likewise for the Wi-Fi info screen.
+  if (state.reel_id === WIFI_IMAGE.reel_id)
+    return (
+      <ImageStage src={WIFI_IMAGE.image_path} alt={WIFI_IMAGE.title} />
+    );
 
   if (!sessionStarted) return <PreShow />;
   // Once admin has cued a reel we keep the video on screen for every state —
@@ -110,11 +115,17 @@ function StartGate({ onStart }: { onStart: () => void }) {
 
 function CaughtUpStage() {
   return (
+    <ImageStage src={CAUGHT_UP.image_path} alt={CAUGHT_UP.title} />
+  );
+}
+
+function ImageStage({ src, alt }: { src: string; alt: string }) {
+  return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={CAUGHT_UP.image_path}
-        alt={CAUGHT_UP.title}
+        src={src}
+        alt={alt}
         className="max-w-full max-h-full object-contain"
       />
     </div>

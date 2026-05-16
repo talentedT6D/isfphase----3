@@ -1,7 +1,7 @@
 import manifest from "./non-votable.json";
 import { REELS } from "./reels";
 import { LOADING_ANIM } from "./loading-anim";
-import { CAUGHT_UP, WINNER_FINAL_REELS } from "./cast-content";
+import { CAUGHT_UP, WIFI_IMAGE, WINNER_FINAL_REELS } from "./cast-content";
 
 // Videos that get cast to the hall screen but are NOT open for voting.
 // Drop the file in public/non-votable-videos/ and add an entry here. While
@@ -43,6 +43,7 @@ export function findNonVotableReel(
 export function isCastOnly(reelId: string | null | undefined): boolean {
   if (!reelId) return false;
   if (reelId === CAUGHT_UP.reel_id) return true;
+  if (reelId === WIFI_IMAGE.reel_id) return true;
   if (WINNER_FINAL_REELS.some((r) => r.reel_id === reelId)) return true;
   return NON_VOTABLE_REELS.some((r) => r.reel_id === reelId);
 }

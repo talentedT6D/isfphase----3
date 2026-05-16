@@ -18,6 +18,7 @@ import {
 import { LOADING_ANIM } from "@/lib/loading-anim";
 import {
   CAUGHT_UP,
+  WIFI_IMAGE,
   WINNER_FINAL_REELS,
   type WinnerFinalReel,
 } from "@/lib/cast-content";
@@ -207,6 +208,7 @@ function Panel() {
   };
 
   const castCaughtUp = () => castIdle(CAUGHT_UP.reel_id);
+  const castWifi = () => castIdle(WIFI_IMAGE.reel_id);
 
   // Quick "pin the orange filler to the hall" action — same effect as
   // casting the Orange filler screen from the non-votable list but
@@ -355,6 +357,13 @@ function Panel() {
         reels={NON_VOTABLE_REELS}
         castReelId={playback.reel_id}
         onCast={castNonVotable}
+      />
+      <ImageCastLibrary
+        title="WI-FI INFO"
+        rowTitle={WIFI_IMAGE.title}
+        rowSubtitle="Image stays on screen until you cast something else"
+        active={playback.reel_id === WIFI_IMAGE.reel_id}
+        onCast={castWifi}
       />
       <Library
         query={query}
@@ -771,10 +780,36 @@ function CaughtUpLibrary({
   onCast: () => void;
 }) {
   return (
+    <ImageCastLibrary
+      title="CAUGHT UP IMAGE"
+      rowTitle="You are all caught up"
+      rowSubtitle="Image stays on screen until you cast something else"
+      active={active}
+      onCast={onCast}
+    />
+  );
+}
+
+// Generic single-image cast section. Renders a labelled section with one
+// row + one Cast button; flips to "On screen" while the image is live.
+function ImageCastLibrary({
+  title,
+  rowTitle,
+  rowSubtitle,
+  active,
+  onCast,
+}: {
+  title: string;
+  rowTitle: string;
+  rowSubtitle: string;
+  active: boolean;
+  onCast: () => void;
+}) {
+  return (
     <section className="p-5 bg-stone-50 border-t border-stone-200">
       <header className="mb-3 max-w-3xl mx-auto">
         <h2 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
-          CAUGHT UP IMAGE
+          {title}
         </h2>
       </header>
       <div className="bg-white border border-stone-300 max-w-3xl mx-auto">
@@ -784,10 +819,8 @@ function CaughtUpLibrary({
           }`}
         >
           <div className="min-w-0">
-            <div className="font-semibold text-sm">You are all caught up</div>
-            <div className="text-stone-500 text-xs">
-              Image stays on screen until you cast something else
-            </div>
+            <div className="font-semibold text-sm">{rowTitle}</div>
+            <div className="text-stone-500 text-xs">{rowSubtitle}</div>
           </div>
           <button
             onClick={onCast}

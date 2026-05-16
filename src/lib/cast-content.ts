@@ -26,6 +26,12 @@ export const CAUGHT_UP = {
   title: "You are all caught up",
 } as const;
 
+export const WIFI_IMAGE = {
+  reel_id: "__wifi__",
+  image_path: "/wifi/wife%20eye%402x-100.jpg",
+  title: "Wi-Fi",
+} as const;
+
 export function findWinnerFinal(
   reelId: string | null | undefined,
 ): WinnerFinalReel | null {
