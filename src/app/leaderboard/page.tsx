@@ -212,7 +212,7 @@ function Results() {
       </div>
 
       <section className="p-5">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <header className="mb-3">
             <h1 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
               REEL RANKING · BY TOTAL SCORE
@@ -231,9 +231,9 @@ function Results() {
                     {JUDGES.map((j) => (
                       <th
                         key={j.id}
-                        className="px-3 py-2 font-semibold text-right whitespace-nowrap"
+                        className="px-2 py-2 font-semibold text-right whitespace-nowrap"
                       >
-                        {j.name}
+                        {j.name.split(" ")[0]}
                       </th>
                     ))}
                     <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
