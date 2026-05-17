@@ -213,13 +213,20 @@ function Results() {
     });
   }, [votes]);
 
-  // Separate ranking: reels by how many audience members voted on them —
-  // the popularity / engagement view, independent of score.
+  // Separate ranking: reels by the total points audience members gave
+  // them — sum of every audience score, not the average. Higher = more
+  // popular AND/OR higher-scored by the audience.
   const audienceFavourites = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const v of votes) {
+      if (JUDGE_ID_SET.has(v.user_id)) continue;
+      totals.set(v.reel_id, (totals.get(v.reel_id) ?? 0) + v.score);
+    }
     return [...results]
-      .filter((r) => r.audienceCount > 0)
-      .sort((a, b) => b.audienceCount - a.audienceCount);
-  }, [results]);
+      .map((r) => ({ ...r, audienceTotal: totals.get(r.reel_id) ?? 0 }))
+      .filter((r) => r.audienceTotal > 0)
+      .sort((a, b) => b.audienceTotal - a.audienceTotal);
+  }, [results, votes]);
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-mono">
@@ -234,7 +241,7 @@ function Results() {
         <div className="max-w-6xl mx-auto">
           <header className="mb-3">
             <h1 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
-              AUDIENCE FAVOURITE · BY VOTE COUNT
+              AUDIENCE FAVOURITE · BY TOTAL SCORE
             </h1>
           </header>
           {!loaded ? (
@@ -251,10 +258,10 @@ function Results() {
                     <th className="px-3 py-2 font-semibold">#</th>
                     <th className="px-3 py-2 font-semibold">Reel</th>
                     <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
-                      Votes
+                      Total audience score
                     </th>
                     <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
-                      Audience avg
+                      Votes
                     </th>
                   </tr>
                 </thead>
@@ -267,12 +274,10 @@ function Results() {
                         <div className="text-stone-500">{r.creator}</div>
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums font-bold text-stone-900">
-                        {r.audienceCount}
+                        {r.audienceTotal}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
-                        {r.audienceAvg === null
-                          ? "—"
-                          : r.audienceAvg.toFixed(1)}
+                        {r.audienceCount}
                       </td>
                     </tr>
                   ))}
