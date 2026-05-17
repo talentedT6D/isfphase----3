@@ -236,17 +236,11 @@ function Results() {
                         {j.name}
                       </th>
                     ))}
-                    <th className="px-3 py-2 font-semibold text-right">
-                      Judge avg
+                    <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
+                      Judge avg · rank
                     </th>
                     <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
-                      Judge rank
-                    </th>
-                    <th className="px-3 py-2 font-semibold text-right">
-                      Audience avg
-                    </th>
-                    <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
-                      Audience rank
+                      Audience avg · rank · n
                     </th>
                     <th className="px-3 py-2 font-semibold text-right">
                       Total
@@ -275,43 +269,37 @@ function Results() {
                           )}
                         </td>
                       ))}
-                      <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-stone-900">
+                      <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-stone-900 whitespace-nowrap">
                         {r.judgeAvg === null ? (
                           <span className="text-stone-300">—</span>
                         ) : (
-                          r.judgeAvg.toFixed(1)
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
-                        {r.judgeRank === null ? (
-                          <span className="text-stone-300">—</span>
-                        ) : (
                           <>
-                            <span className="text-stone-400">#</span>
-                            {r.judgeRank}
+                            {r.judgeAvg.toFixed(1)}
+                            {r.judgeRank !== null && (
+                              <span className="text-stone-400 font-normal">
+                                {" · #"}
+                                {r.judgeRank}
+                              </span>
+                            )}
                           </>
                         )}
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
+                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600 whitespace-nowrap">
                         {r.audienceAvg === null ? (
                           <span className="text-stone-300">—</span>
                         ) : (
                           <>
                             {r.audienceAvg.toFixed(1)}
+                            {r.audienceRank !== null && (
+                              <span className="text-stone-400">
+                                {" · #"}
+                                {r.audienceRank}
+                              </span>
+                            )}
                             <span className="text-stone-400">
-                              {" "}
-                              · {r.audienceCount}
+                              {" · "}
+                              {r.audienceCount}
                             </span>
-                          </>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
-                        {r.audienceRank === null ? (
-                          <span className="text-stone-300">—</span>
-                        ) : (
-                          <>
-                            <span className="text-stone-400">#</span>
-                            {r.audienceRank}
                           </>
                         )}
                       </td>
