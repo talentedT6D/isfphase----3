@@ -105,15 +105,26 @@ function Results() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { data, error } = await supabase
-        .from("votes")
-        .select("user_id, reel_id, score");
-      if (cancelled) return;
-      if (error) {
-        console.error("[leaderboard] load failed", error);
-        return;
+      // Supabase caps a single REST select at 1000 rows. Paginate so we
+      // pick up every vote even with a couple hundred voters across all
+      // reels.
+      const PAGE = 1000;
+      const all: RawVote[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("votes")
+          .select("user_id, reel_id, score")
+          .range(from, from + PAGE - 1);
+        if (cancelled) return;
+        if (error) {
+          console.error("[leaderboard] load failed", error);
+          return;
+        }
+        if (!data || data.length === 0) break;
+        all.push(...(data as RawVote[]));
+        if (data.length < PAGE) break;
       }
-      setVotes((data as RawVote[]) ?? []);
+      setVotes(all);
       setLoaded(true);
     };
     load();
