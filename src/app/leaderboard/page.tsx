@@ -213,6 +213,14 @@ function Results() {
     });
   }, [votes]);
 
+  // Separate ranking: reels by how many audience members voted on them —
+  // the popularity / engagement view, independent of score.
+  const audienceFavourites = useMemo(() => {
+    return [...results]
+      .filter((r) => r.audienceCount > 0)
+      .sort((a, b) => b.audienceCount - a.audienceCount);
+  }, [results]);
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-mono">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-300 bg-white text-xs">
@@ -221,6 +229,59 @@ function Results() {
         <span className="font-semibold tracking-wider">RESULTS</span>
         <span className="text-stone-400">· judges vs. audience</span>
       </div>
+
+      <section className="p-5 border-b border-stone-200">
+        <div className="max-w-6xl mx-auto">
+          <header className="mb-3">
+            <h1 className="text-xs font-semibold tracking-[0.3em] text-stone-500">
+              AUDIENCE FAVOURITE · BY VOTE COUNT
+            </h1>
+          </header>
+          {!loaded ? (
+            <div className="text-sm text-stone-500">Loading…</div>
+          ) : audienceFavourites.length === 0 ? (
+            <div className="text-sm text-stone-500">
+              No audience votes yet.
+            </div>
+          ) : (
+            <div className="bg-white border border-stone-300 overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-stone-300 text-stone-500 text-left">
+                    <th className="px-3 py-2 font-semibold">#</th>
+                    <th className="px-3 py-2 font-semibold">Reel</th>
+                    <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
+                      Votes
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">
+                      Audience avg
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-200">
+                  {audienceFavourites.map((r, i) => (
+                    <tr key={r.reel_id}>
+                      <td className="px-3 py-2.5 text-stone-400">{i + 1}</td>
+                      <td className="px-3 py-2.5">
+                        <div className="font-semibold text-sm">{r.title}</div>
+                        <div className="text-stone-500">{r.creator}</div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums font-bold text-stone-900">
+                        {r.audienceCount}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-stone-600">
+                        {r.audienceAvg === null
+                          ? "—"
+                          : r.audienceAvg.toFixed(1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="p-5">
         <div className="max-w-6xl mx-auto">
