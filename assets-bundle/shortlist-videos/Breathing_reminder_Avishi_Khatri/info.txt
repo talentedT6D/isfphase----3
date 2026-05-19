@@ -1,0 +1,16 @@
+title: Breathing reminder🔫
+name: Avishi Khatri
+phone: 8851964162
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: 
+Notes [If Any]: 
+category: Edits
+set: Set 4
+average_score: 67
+vote_count: 3
+email: avishikhatri2127@gmail.com
+video_id: Breathing_reminder_Avishi_Khatri
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778436143872.mp4
+creator: @visheeverse
+Duration: 0:10

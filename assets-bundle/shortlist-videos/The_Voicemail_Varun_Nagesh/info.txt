@@ -1,0 +1,16 @@
+title: The Voicemail
+name: Varun Nagesh
+phone: 8073711766
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: Varun Nagesh , Madhur Manoj
+Notes [If Any]: 
+category: Emotional
+set: Set 4
+average_score: 67
+vote_count: 3
+email: varun@theboringpeople.in
+video_id: The_Voicemail_Varun_Nagesh
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778421249919.mp4
+creator: @Cilianmurthy
+Duration: 2:00

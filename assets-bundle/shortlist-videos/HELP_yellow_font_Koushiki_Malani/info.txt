@@ -1,0 +1,16 @@
+title: HELP (yellow font)
+name: Koushiki Malani
+phone: 9075083000
+Caller: Riya
+Status: Not coming
+Name of Attendees: 
+Notes [If Any]: She has still said": She will try but written with- "Looks Difficult"
+category: Comedy
+set: Set 2
+average_score: 82
+vote_count: 3
+email: malanikoushikii@gmail.com
+video_id: HELP_yellow_font_Koushiki_Malani
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778188127541.mp4
+creator: @the_koushiki
+Duration: 1:57

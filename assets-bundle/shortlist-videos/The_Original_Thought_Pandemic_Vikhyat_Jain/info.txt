@@ -1,0 +1,16 @@
+title: The Original Thought Pandemic
+name: Vikhyat Jain
+phone: 9310821924
+Caller: Riya
+Status: Coming
+Name of Attendees: 
+Notes [If Any]: 
+category: Comedy
+set: Set 3
+average_score: 70
+vote_count: 3
+email: vikhyatjain17@gmail.com
+video_id: The_Original_Thought_Pandemic_Vikhyat_Jain
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778223358347.mp4
+creator: @vikhyatistic
+Duration: 1:53

@@ -1,0 +1,16 @@
+title: THE ICK
+name: Kshitij Singh
+phone: 6200308477
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: 
+Notes [If Any]: 
+category: Comedy
+set: Set 1
+average_score: 67
+vote_count: 3
+email: luminescencework@gmail.com
+video_id: THE_ICK_Kshitij_Singh
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1776974435462.mov
+creator: @luminescence.ks
+Duration: 1:58

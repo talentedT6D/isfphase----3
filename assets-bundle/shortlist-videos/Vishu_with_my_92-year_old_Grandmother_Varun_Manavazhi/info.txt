@@ -1,0 +1,16 @@
+title: Vishu with my 92-year old Grandmother
+name: Varun Manavazhi
+phone: +919400620728
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: 
+Notes [If Any]: 
+category: Emotional
+set: Set 4
+average_score: 77
+vote_count: 3
+email: varunmanavazhi@gmail.com
+video_id: Vishu_with_my_92-year_old_Grandmother_Varun_Manavazhi
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778436976956.mp4
+creator: @varun.manavazhi
+Duration: 1:00

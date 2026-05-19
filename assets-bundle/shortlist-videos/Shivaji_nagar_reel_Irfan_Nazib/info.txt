@@ -1,0 +1,16 @@
+title: Shivaji nagar reel
+name: Irfan Nazib
+phone: 9706674879
+Caller: Saanjali
+Status: Coming
+Name of Attendees: Irfan Nazib , Saheel Lokhande
+Notes [If Any]: will let me know by tomorrow if he's bringing a +1
+category: Food
+set: Set 3
+average_score: 65
+vote_count: 3
+email: irfannazib28g@gmail.com
+video_id: Shivaji_nagar_reel_Irfan_Nazib
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778237912201.mp4
+creator: @irfannazib28
+Duration: 0:34

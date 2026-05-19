@@ -1,0 +1,16 @@
+title: Ram Kewal ki Chai - Lucknow
+name: Kushagra Tiwari
+phone: 8840889627
+Caller: Riya
+Status: Coming
+Name of Attendees: 
+Notes [If Any]: 
+category: Food
+set: Set 3
+average_score: 77
+vote_count: 3
+email: awarapraani@gmail.com
+video_id: Ram_Kewal_ki_Chai_-_Lucknow_Kushagra_Tiwari
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778385834887.mp4
+creator: @awarapraani
+Duration: 0:57

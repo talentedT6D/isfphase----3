@@ -1,0 +1,16 @@
+title: Narak vlog
+name: Priyanshu
+phone: 8058171724
+Caller: Riya
+Status: Not coming
+Name of Attendees: 
+Notes [If Any]: Said he will confirm by tonight.
+category: Comedy
+set: Set 2
+average_score: 89
+vote_count: 3
+email: priyanshusamadhiya7250@gmail.com
+video_id: Narak_vlog_Priyanshu
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778213965233.mp4
+creator: @Priyanshu@verse
+Duration: 1:28

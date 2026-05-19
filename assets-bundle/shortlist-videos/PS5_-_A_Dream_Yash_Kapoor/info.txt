@@ -1,0 +1,16 @@
+title: PS5 - A Dream
+name: Yash Kapoor
+phone: 9509923411
+Caller: Riya
+Status: Coming with +1
+Name of Attendees: Yash Kapoor, Sagar Goyal
+Notes [If Any]: 
+category: Emotional
+set: Set 1
+average_score: 75
+vote_count: 3
+email: aryan.yashkapoor@gmail.com
+video_id: PS5_-_A_Dream_Yash_Kapoor
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1777112109508.mp4
+creator: @yash_kapoor.mkv
+Duration: 1:29

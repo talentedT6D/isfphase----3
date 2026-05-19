@@ -1,0 +1,16 @@
+title: FINDING NARA
+name: JAYANTH SOMASHEKAR
+phone: 9686277969
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: Jayanth Somashekar, Shreya S
+Notes [If Any]: 
+category: AI
+set: Set 3
+average_score: 79
+vote_count: 3
+email: jayanthss2345@gmail.com
+video_id: FINDING_NARA_JAYANTH_SOMASHEKAR
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778388752562.mov
+creator: @frametheory.ai
+Duration: 0:59

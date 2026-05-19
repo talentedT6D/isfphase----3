@@ -1,0 +1,16 @@
+title: Megha’s birthday!
+name: Raksha Jaju
+phone: 8999429824
+Caller: Saanjali
+Status: Coming with +1
+Name of Attendees: Raksha Jaju, Medha Reddymula
+Notes [If Any]: 
+category: Emotional
+set: Set 2
+average_score: 65
+vote_count: 3
+email: rakshajaju19@gmail.com
+video_id: Megha_s_birthday_Raksha_Jaju
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778066875371.MOV
+creator: @_raksha.j
+Duration: 1:27

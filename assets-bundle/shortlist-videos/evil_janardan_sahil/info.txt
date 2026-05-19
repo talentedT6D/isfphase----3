@@ -1,0 +1,16 @@
+title: evil janardan
+name: sahil
+phone: 9699120342
+Caller: Riya
+Status: Coming
+Name of Attendees: Sahil P.
+Notes [If Any]: Lit school team kid.
+category: Edits
+set: Set 4
+average_score: 71
+vote_count: 3
+email: sahilpawarr69@gmail.com
+video_id: evil_janardan_sahil
+Video URL: https://iqzxnbosjcgjibfjimna.supabase.co/storage/v1/object/public/submissions/temp_1778437243683.mp4
+creator: @isahilpwrr
+Duration: 0:44
